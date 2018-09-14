@@ -1,0 +1,374 @@
+<template> 
+  <div class="wrapper" background-color="#f5f5f5">
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#3CB0FC" title={{title}} title-color="white"></bx-navbar> 
+    <div class="wrapper" style="margin-top:{{navBarHeight}}">
+     
+        <div class="login">  
+            <div class="input-wrapper" onclick="pickDate(0)" background-color="#ffffff">  
+                <text class="lefttext" >开始时间</text>  
+                <text  class="input"  type="text" style="color:{{beginTimeColor}};">{{value}} </text>  
+                <image class="input-img" src="local://time.png"  ></image>  
+            </div> 
+           <div class="input-wrapper" onclick="pickDate(1)" background-color="#ffffff">  
+                <text class="lefttext" >结束时间</text>  
+                <text class="input"  style="color:{{endTimeColor}};" >{{value2}} </text>  
+                <image class="input-img" src="local://time.png"  ></image>  
+            </div>
+            <div class="input-wrapper" background-color="#ffffff">  
+                <text class="lefttext" >文件名称</text>  
+                <input oninput="onInputFileName" class="input" type="text"  placeholder="请输入文件名称" placeholder-color="#d4d4d4"  value=""  />
+            </div>
+            <div class="input-wrapper" onclick="toSelectType()" background-color="#ffffff">  
+                <text class="lefttext" >公文类别</text>  
+                <text class="input" style="color:{{typeColor}};" > {{type1}} </text> 
+                <image class="input-img" src="local://right_icon.png"></image>  
+            </div>
+            <div class="input-wrapper" onclick="toOfficialDocument()" background-color="#ffffff">  
+                <text class="lefttext" >公文文种</text>  
+                <text class="input" style="color:{{documentColor}};"> {{type2}} </text> 
+                <image class="input-img" src="local://right_icon.png"></image>  
+            </div>
+            <div class="input-wrapper" background-color="#ffffff">  
+                <text class="lefttext" >发布人</text>  
+                <input oninput="onInputUser" class="input" type="text" placeholder="请输入发布人" placeholder-color="#d4d4d4" value=""/>
+            </div>
+            <div class="input-wrapper" background-color="#ffffff">  
+                <text class="lefttext" >来文单位</text>  
+                <input oninput="onInputUnit" class="input" type="text" placeholder="请输入来文单位" placeholder-color="#d4d4d4" value=""/>
+            </div>
+            <div class="input-wrapper-bottom" background-color="#ffffff">  
+                <text class="lefttext" >文件编号</text>  
+                <input  class="input" type="text" placeholder="请输入文件编号" placeholder-color="#d4d4d4" oninput="onInputNumber" >
+                
+                </input>
+            </div>
+
+            <div >  
+                <div class="input-login"  onclick="toquery">  
+                    <text class="input-login-text">查询</text>  
+                </div>  
+            </div>  
+            
+        </div>  
+        
+      
+  </div>  
+  </div>  
+</template>  
+  
+<script>  
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var modal = require('@weex-module/modal') || {};
+    var tools = require('../include/tools.js').methods;
+    var storage = require('@weex-module/storage');
+    module.exports = {  
+       created: function() {
+            this.$getConfig(function (config) {
+                var env = config.env;
+                tools.setNavBarHeight(this);
+                if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+                }
+            }.bind(this));
+           
+
+            this.baseURL = getBaseURL(this);
+            this.$on('naviBar.leftItem.click', function(event) {
+                // When a notify comes, this handler will be run.
+                // `event.detail` will be `{a: 1}`
+                var params = {
+                  animated: 'true'
+                }
+                navigator.pop(params, function () {
+                // callback
+                })
+            });
+
+            //反向传值
+            var self = this;
+            const Stack = new BroadcastChannel('query_select_type');
+            Stack.onmessage = function (event) {
+                console.log('resultabcd',event.data) 
+                var str = event.data.split(' ');
+                self.type1 = str[0];
+                self.type1Index = str[1];
+                self.typeColor = "#373737";
+            }
+
+            const Stack2 = new BroadcastChannel('query_official_document')
+            Stack2.onmessage = function (event) { 
+                var str = event.data.split(' ');
+                self.type2 = str[0];
+                self.type2Index = str[1];
+                self.documentColor = "#373737";
+            }
+            Stack2.close;
+           
+        },
+        data:{  
+            baseURL: '',
+            dir: 'official_doc',
+            navBarHeight: 88,
+            title:"文件查询",
+            fileName:'',  
+            user:'',
+            unit:'',
+            fileNumber:'',
+            value: "请选择时间",
+            value2: "请选择时间",
+            type1:"请选择公文类别",
+            type1Index:'',
+            type2:"请选择公文文种",
+            type2Index:'',
+            selectType:'',
+            beginTimeColor:"#d4d4d4",
+            endTimeColor:"#d4d4d4",
+            typeColor:"#d4d4d4",
+            documentColor:"#d4d4d4",
+            selectBeginTime:'',
+            selectEndTime:'',
+        },  
+        methods:{  
+            
+            oninput: function (event) {
+            this.fileName = event.value;
+             },
+            
+            //文件名称
+            onInputFileName:function(event){
+                var self = this;
+                self.fileName = event.value;
+                self.inputNameColor = "#373737";
+            },
+            //发布人
+            onInputUser:function(event){
+                this.user = event.value;
+            },
+            
+            //来文单位
+            onInputUnit:function(event){
+                this.unit = event.value;
+            },
+            //文件编号
+            onchangeFileNumber:function(event){
+                this.fileNumber = event.value;
+            },
+
+            onInputNumber: function(e) { 
+                this.fileNumber = e.value; 
+                }
+            ,
+             pickDate: function(i) {
+                var picker = require('@weex-module/picker');
+                var self = this;
+                var str;
+                if(i == 0){
+                    if(self.value == '请选择时间'){
+                        var d = new Date();
+                        str = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+                    }else{
+                        str = self.value;
+                    }
+                }else{
+                    if(self.value2 == '请选择时间'){
+                        var d = new Date();
+                        str = d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+                    }else{
+                        str = self.value2;
+                    }
+                }
+                
+                
+                picker.pickDate({
+                    'value':str,
+                    'max':'2029-11-28',
+                    'min':'2015-11-28'
+                },function (ret) {
+                    var result = ret.result;
+                    if(result == 'success')
+                    {
+                        if(i==0){
+                            self.value = ret.data;
+                            self.beginTimeColor="#373737";
+                        }else{
+                            self.value2 = ret.data;
+                            self.endTimeColor= "#373737";
+                        }
+                    }
+                });
+
+            },
+
+            toSelectType:function(){
+                var url = this.baseURL;
+                if (typeof window !== 'object') {
+                    url = this.baseURL + 'search-doc/query-select-type.js?selectIndex='+this.type1Index; 
+                    
+                }
+                var params = {'url':url};
+                navigator.push(params,function(e){
+                });
+            },
+
+            toOfficialDocument:function(){
+                var url = this.baseURL;
+                if (typeof window !== 'object') {
+                    url = this.baseURL + 'search-doc/query-official-document.js?selectIndex='+this.type2Index; 
+                    
+                }
+                var params = {'url':url};
+                navigator.push(params,function(e){
+                });
+            },
+            
+
+            
+            
+            /*处理查询*/  
+            toquery: function () {  
+                var self = this;
+                //是否执行查询操作
+                var status = 1;
+                var beginDate = self.value;
+                var endDate = self.value2;
+                if(beginDate == '请选择时间'){
+                    status = 0;
+                    modal.toast({ 'message': '请选择开始时间',  'duration': 2});
+                }else{
+                    if(endDate == '请选择时间'){
+                        status = 0;
+                        modal.toast({ 'message': '请选择结束时间',  'duration': 2});
+                    }else{
+                        var beginDateArray = beginDate.split("-");
+                        var endDateArray = endDate.split("-");
+                        //年份比较
+                        var beginYear = parseInt(beginDateArray[0]);
+                        var endYear = parseInt(endDateArray[0]);
+                        if(beginYear < endYear){
+                            status = 0;
+                            modal.toast({ 'message': '时间间隔不能超过一个月',  'duration': 2});
+                        }else if(beginYear == endYear){
+                            var beginMonth = parseInt(beginDateArray[1]);
+                            var endMonth = parseInt(endDateArray[1]);
+                            var month = endMonth - beginMonth;
+                            if(month > 0){
+                                if(month > 1){
+                                    status = 0;
+                                    modal.toast({ 'message': '时间间隔不能超过一个月',  'duration': 2});
+                                }else if( month == 1){
+                                    var beginDay =  parseInt(beginDateArray[2]);
+                                    var endDay = parseInt(endDateArray[2]);
+                                    if(endDay > beginDay){
+                                        status = 0;
+                                        modal.toast({ 'message': '时间间隔不能超过一个月',  'duration': 2}); 
+                                    }
+                                }
+                            }else if(month == 0){
+                                    var beginDay =  parseInt(beginDateArray[2]);
+                                    var endDay = parseInt(endDateArray[2]);
+                                    if(endDay < beginDay){
+                                        status = 0;
+                                        modal.toast({ 'message': '日期选择有误',  'duration': 2}); 
+                                    }
+                            }else{
+                                status = 0;
+                                modal.toast({ 'message': '月份选择有误',  'duration': 2});
+                            }
+                        }else{
+                            status = 0;
+                            modal.toast({ 'message': '年份选择有误',  'duration': 2});
+                        }
+                    }
+                }
+                
+                
+                    if(status == 1){
+                        var url = 'search-doc/query-results.js?beginTime='+beginDate+'&endTime='+endDate+'&fileName='+self.fileName+'&type1='+self.type1Index+'&type2='+self.type2Index+'&user='+self.user+'&unit='+self.unit+'&fileNumber='+self.fileNumber;
+                        tools.push(navigator,this.baseURL,url);
+                    }
+
+                
+            }  
+        }  
+    }  
+</script>  
+  
+<style>  
+
+    .wrapper {  
+        position: absolute;  
+        top: 0;  
+        right: 0;  
+        bottom: 0;  
+        left: 0;  
+    }  
+    .login{  
+        width:750;  
+        margin-top:80;
+    }  
+    .input-wrapper{  
+        width:750;  
+        height:75;
+        border-top-width:1;
+        border-color: #d4d4d4;  
+    }  
+    .input-wrapper-bottom{  
+        width:750;  
+        border-width:1;
+        border-color: #d4d4d4;  
+    } 
+    .lefttext{  
+        font-size: 28;  
+        position: absolute;  
+        color:#373737;
+        top:20;  
+        left: 25;  
+        align:center;
+        outline: none;  
+        
+    }  
+
+    .input {  
+        font-size: 28;  
+        
+        height: 82;  
+        width:350;  
+        margin-left:220;
+        padding-top: 20;  
+        padding-bottom: 20;  
+    }  
+   
+    .input-img{  
+        position: absolute;  
+        top:25;  
+        right: 30;  
+        width: 30;  
+        height: 30;  
+        
+        outline: none;  
+    }  
+    
+    .input-login{  
+        width: 650;  
+        margin-left: 50;  
+        margin-right: 50;
+        height: 80;  
+        background-color: #3CB0FC;  
+        border-radius: 10;  
+        margin-top: 60;  
+    }  
+    .input-login-text{
+        height: 80;  
+        width: 650;  
+        text-align: center;  
+        line-height: 80;  
+        color: white;  
+        font-size: 35;  
+    }  
+  
+</style>  

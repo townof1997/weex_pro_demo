@@ -1,0 +1,38 @@
+<template>
+        <div   id="target" style="position: absolute; top:{{top}}; left:0; width: 750; height:750; justify-content: center; align-items: center;">
+            <img style="width: 88;height: 88;" src="local://loading.png"></img>
+        </div>
+</template>
+<script>
+    module.exports = {
+        data: {
+            rotate : 0,
+
+            //高度
+            top: 0,
+        },
+        ready: function () {
+          this.doAnim();
+        },
+        methods: {
+            doAnim: function () {
+                var animation = require('@weex-module/animation');
+                var self = this;
+                var target = this.$el('target');
+                self.rotate += 360;
+                var options = {
+                    styles: {
+                        transform: 'rotate(' + self.rotate + 'deg)',
+                        transformOrigin: 'center center',
+                    },
+                    timingFunction: 'linear',
+                    duration: 1000,
+                };
+                var callback = function () {
+                    self.doAnim();
+                };
+                animation.transition(target, options, callback);
+            }
+        }
+    }
+</script>

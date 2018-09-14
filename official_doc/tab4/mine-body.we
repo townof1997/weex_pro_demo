@@ -1,0 +1,52 @@
+<template>
+  <div class="body-root">
+    <div class="div-item" repeat="item in itemlist">
+      <image class="item-img" src ="{{ item.img }}" ></image>
+      <text class="item-text">{{ item.text }}</text>
+      <image class = "right-icon" src= "{{ righticon }}" ></image><!--向右箭头-->
+    </div>
+  </div>
+</template>
+<script>
+export default {
+  data: function data() {
+    return {
+      itemlist:[],
+    }
+  }
+}
+</script>
+<style lang="scss">
+  .body-root {
+    background-color: #e8e8e8;
+  }
+
+  .div-item {
+    background-color: #ffffff;
+    flex-direction:row;
+    align-items:center;
+    height: 60;
+    border-style: solid;
+    border-bottom-width: 1px;
+    border-color: #e8e8e8;
+
+  }
+
+  .item-img {
+    width:50;
+    height:50;
+    margin-left: 25;
+    margin-right: 10;
+  }
+
+  .item-text {
+    font-size: 24;
+    color: #000000;
+
+  }
+
+  .right-icon {
+      width:50;
+      height:50;
+  }
+</style>

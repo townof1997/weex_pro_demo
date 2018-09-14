@@ -1,0 +1,207 @@
+<template>
+<div style="background-color:#F0EFF5;">
+    <bx-customnavbar  left-item-src="local://back_button.png" left-item-title = "返回" background-color="#3CB0FC" right-item-title = "确认" title={{title}} title-color="white">
+        <scroller append="tree">
+            <div class="contentpage" repeat="{{item in detailData}}" onclick="clickSwitch" style="background-color:white;">
+                 <text class="leftfont">{{item.name}}</text>
+                 <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://check.png" if="{{item.isDisplay}}"></image>
+            </div>
+        </scroller>
+    </bx-customnavbar>
+    <bx-loading if={{loading}}></bx-loading>
+</div> 
+</template>
+
+<style>
+    .contentpage{
+      border-bottom-width:1px;
+      border-bottom-color:#dadada;
+      height:100;
+      flex-direction:row;
+      justify-content:space-between;
+    }
+    .leftfont{
+      margin-left:30;
+      height:100;
+      line-height:100;
+    }
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-customnavbar.we');
+   require('../components/bx-loading.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var getParameterByName = require('../include/tools.js').methods.getParameterByName;
+   var service = require('@weex-module/service') || {}
+   var modal = require('@weex-module/modal') || {};
+   var storage = require('@weex-module/storage');
+   var tools = require('../include/tools.js').methods;
+    module.exports = {
+        data: {
+            selectType:'',
+            color: '#ff0000',
+            text: '新建公文',
+            title: '',
+            navBarHeight: 88,
+            detailData:[],
+            docId: '',
+            personStr:'',
+            dir: 'official_doc',
+            peopleList:'',
+            peoples:'',
+            selectedPerson:[],
+            isDisplay:'',
+            mydeptName:'',
+            userName: '',
+            userId: '',
+            loading: true
+        },
+
+        created: function() {
+            var self = this;
+          this.$getConfig(function (config) {
+            var env = config.env;
+            if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+            }
+          }.bind(this));
+          this.getselectData();
+          var bundleUrl = this.$getConfig().bundleUrl;
+          var deptName = tools.getParameterByName("mydeptName",bundleUrl);
+          this.mydeptName = deptName;
+        //   console.log("--------------"+deptName);
+          /*获取用户信息*/
+            weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+        
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+
+                //数据加载
+                self.renderData(deptName);
+
+            });
+
+          this.baseURL = getBaseURL(this);
+
+
+            this.$on('onclickleftitem', function(event) {
+                var params = {
+                  animated: 'true'
+                }
+               
+                // storage.setItem('person-list',JSON.stringify(self.selectedPerson), function(e) {
+                // });
+                navigator.pop(params, function () {
+                   
+                })
+            })
+
+            this.$on('onclickrightitem', function(event){
+                tools.pop(navigator);
+                //控制连续两次返回
+                storage.setItem('backTwice', '1', function(e) {
+                });
+            })
+        },
+        methods: {
+                clickSwitch: function(e) {
+                    var self = this;
+                    for(var i = 0;i < this.detailData.length;i++){
+                        
+                        if(this.$index == i){
+                            this.detailData[i].isDisplay = !this.detailData[i].isDisplay;
+                            if(this.detailData[i].isDisplay){
+                                this.selectedPerson.push(this.detailData[i]);
+                            }else{
+                                for(var d=0;d<this.selectedPerson.length;d++){
+                                    if(this.selectedPerson[d].deptName==this.mydeptName&&this.selectedPerson[d].name==this.detailData[i].name){
+                                        this.selectedPerson.splice(d,1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                  //存储选中人员
+                 storage.setItem('person-list',JSON.stringify(self.selectedPerson), function(e) {});
+                 console.log('测试增加删除'+JSON.stringify(self.selectedPerson));
+            },
+                getselectData:function(){
+                    var self = this;
+                   storage.getItem('person-list', function(e) {
+                    var result = e.result;
+                    
+                    if (result === 'success') {
+                        var data = e.data;
+                        console.log("测试增加删除 1 "+data);
+                        if(data!=null&&data!="undefined"&&data.length>0){
+                          console.log("测试增加删除 1 "+data.length);
+                          var mydata = JSON.parse(data);
+                          for(var i=0;i<mydata.length;i++){
+                            self.selectedPerson.push(mydata[i]);
+                          }
+                    }
+                    }
+                    
+                    });
+                },
+
+                getPersonInfo: function(userId,userName,deptName) {
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: "getToDoDoc", //   getSendTask
+                        methodName: "getPersonInfo"
+                    },
+                    data: {
+                        userId :userId ,
+                        userName:userName,
+                        deptName:deptName 
+                    }
+                }
+                return json;
+                },
+
+                renderData: function (mydeptName) {
+                var self = this
+                var bundleUrl = this.$getConfig().bundleUrl;
+                console.log("bundleUrl:"+bundleUrl);
+                  var json = self.getPersonInfo("045089","罗文钦",mydeptName);
+                console.log('get json:', json);
+                service.fetch(json, function(res) {
+                    try {
+                        self.loading = false;     
+                        console.log("测试person"+JSON.stringify(res));
+                        var results = res.data || {}
+                        var peopleList = res.data.peopleList || {}
+                        
+                         console.log(self.selectedPerson.length+"测试ddd"+JSON.stringify(self.selectedPerson));
+                        for(var i = 0; i < peopleList.length; i++) {
+                            var peopleData = peopleList[i];
+                            peopleList[i].index = i;
+                           
+                            peopleList[i].isDisplay = false;
+                            for(var d=0;d<self.selectedPerson.length;d++){
+                                console.log("测试eee"+self.mydeptName+"  ====  "+self.selectedPerson[d].deptName+" ===== "+ peopleList[i].name+"  ====  "+self.selectedPerson[d].name);
+                                //  console.log("测试eeeffftrue");
+                                if(self.mydeptName==self.selectedPerson[d].deptName&&peopleList[i].name==self.selectedPerson[d].name){
+                                    peopleList[i].isDisplay = true;
+                                    console.log("测试eeeffftrue"+self.selectedPerson[d].name);
+                                }
+                            }
+                            // peopleData.isDisplay = false;
+                            peopleList[i].deptName = mydeptName;
+                            self.detailData.push(peopleList[i]);
+                            console.log("测试person"+JSON.stringify(self.detailData));
+                            }
+                            console.log("11111111"+JSON.stringify(self.detailData));
+                        } catch(e) {}
+                    })
+                }
+        }
+    }
+</script>

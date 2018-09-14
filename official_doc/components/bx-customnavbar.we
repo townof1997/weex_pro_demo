@@ -1,0 +1,140 @@
+<template>
+  <div class="wrapper">
+    <div class="status" style=" height: {{topheight}}; backgroundColor: {{backgroundColor}} ">
+    </div>
+    <div class="container" style=" top: {{topheight}}; backgroundColor: {{backgroundColor}} ">
+      <text
+        if={{!rightItemSrc}}
+        naviItemPosition="right"
+        style=" color: {{rightItemColor}} "
+        class="right-text"
+        onclick="onclickrightitem">{{rightItemTitle}}</text>
+      <image
+        if={{rightItemSrc}}
+        naviItemPosition="right"
+        src="{{rightItemSrc}}"
+        class="right-image"
+        onclick="onclickrightitem"></image>
+      <text
+        style=" color: {{leftItemColor}} "
+        class="left-text"
+        onclick="onclickleftitem">{{leftItemTitle}}</text>
+      <image
+        src="{{leftItemSrc}}"
+        class="left-image" 
+        onclick="onclickleftitem"></image>
+      <text
+        naviItemPosition="center"
+        style=" color: {{titleColor}} "
+        class="center-text">{{title}}</text>
+    </div>
+    <div class="wrapper" style=" marginTop: {{contentHeight}} ">
+      <content></content>
+    </div>
+  </div>
+</template>
+
+<script>
+  var getPlatform = require('../include/tools.js').methods.getPlatform
+  module.exports = {
+
+    data:{
+      
+      topheight: 0,
+      contentHeight: 0,
+
+      backgroundColor: 'white',
+      title: "",
+      titleColor: 'white',
+      rightItemSrc: '',
+      rightItemTitle: '',
+      rightItemColor: 'white',
+      leftItemSrc: '',
+      leftItemTitle: '',
+      leftItemColor: 'white',
+      
+    },
+    created:function(){
+        if(getPlatform()=="ios"){
+          this.topheight = 40;
+          this.contentHeight = 128;
+        }else{
+          this.topheight = 0;
+          this.contentHeight = 88;
+        }
+    },
+    methods: {
+      onclickrightitem: function (e) {
+        this.$dispatch('onclickrightitem', e)
+      },
+      onclickleftitem: function (e) {
+        this.$dispatch('onclickleftitem', e)
+      }
+    }
+  }
+</script>
+
+<style>
+  .wrapper {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    width: 750;
+  }
+  .status{
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    width: 750;
+  }
+  .container {
+    flex-direction: row; 
+    position: absolute;  
+    left: 0; 
+    right: 0;
+    height:88; 
+    width: 750;
+  }
+  .right-text {
+    position: absolute; 
+    bottom: 28; 
+    right: 32; 
+    text-align: right;
+    font-size: 32; 
+    font-family: 'Open Sans', sans-serif;
+  }
+  .left-text {
+    position: absolute; 
+    bottom: 26; 
+    left :70; 
+    text-align :left;  
+    font-size: 32; 
+    font-family: 'Open Sans', sans-serif;
+  }
+  .center-text {
+    position: absolute; 
+    bottom: 22; 
+    left: 172; 
+    right: 172;
+    text-align: center; 
+    font-size: 36; 
+    font-weight: bold;
+  }
+  .left-image {
+    position: absolute; 
+    bottom: 20; 
+    left: 28; 
+    width: 50; 
+    height: 50;
+  }
+  .right-image {
+    position: absolute; 
+    bottom: 20; 
+    right: 28; 
+    width: 50; 
+    height: 50;
+  }
+</style>

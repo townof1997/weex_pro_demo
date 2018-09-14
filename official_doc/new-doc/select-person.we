@@ -1,0 +1,230 @@
+<template>
+<div onviewappear="{{viewappear}}" style="background-color:#F0EFF5;">
+    <search-navbar height={{navBarHeight}}  leftimage="local://back_button.png" bcolor={{bcolor}}  todotitle="待选" donetitle="已选" leftcolor={{leftcolor}} rightcolor={{rightcolor}} leftbgcolor={{leftbgcolor}} rightbgcolor={{rightbgcolor}} lefttitle={{lefttitle}}></search-navbar>
+        <scroller if="{{daixuanisplay}}" append="tree">
+            <div repeat="{{item in detailData }}">
+                <div class="contentpage" onclick="personList(item.deptFullName)" style="background-color:white;">
+                    <text class="leftfont">{{changeText(item.deptFullName)}}</text>
+                    <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://right_icon.png"></image>
+                </div>
+            </div>
+        </scroller>
+        <scroller if="{{yixuanisplay}}" append="tree">
+            <div repeat="{{item in selectedPerson }}">
+                <div class="contentpage" onclick="deleteperson(item)">
+                        <text class="leftfont">{{item.name}}</text>
+                        <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://check.png"></image>
+                </div>
+            </div>
+        </scroller>
+        <bx-loading if={{loading}}></bx-loading>
+</div> 
+</template>
+
+<style>
+    .contentpage{
+      border-bottom-width:1px;
+      border-bottom-color:#dadada;
+      height:100;
+      flex-direction:row;
+      justify-content:space-between;
+    }
+    .leftfont{
+      margin-left:30;
+      height:100;
+      line-height:100;
+    }
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-navbar.we');
+   require('../components/search-navbar.we');
+   require('../components/bx-loading.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var getParameterByName = require('../include/tools.js').methods.getParameterByName;
+   var service = require('@weex-module/service') || {}
+   var modal = require('@weex-module/modal') || {};
+   var storage = require('@weex-module/storage');
+   var tools = require('../include/tools.js').methods;
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            text: '新建公文',
+            title: '',
+            navBarHeight: 88,
+            detailData:[],
+            nameData:[],
+            selectedPerson:[],
+            docId: '',
+            personStr:'',
+            orgStr:'',
+            dir: 'official_doc',
+            bcolor:'#3CB0FC',
+            lefttitle:'返回',
+            leftcolor:'#3CB0FC',
+            leftbgcolor:'white',
+            rightcolor:'white',
+            rightbgcolor:'#3CB0FC',
+            yixuanisplay:false,
+            daixuanisplay:true,
+            userName: '',
+            userId: '',
+            loading: true
+        },
+
+        created: function() {
+            var self = this;
+          this.$getConfig(function (config) {
+            var env = config.env;
+            if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+                this.setNavBarState(true);
+            }
+          }.bind(this));
+
+          /*获取用户信息*/
+            weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+        
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+
+                //数据加载
+                self.renderData();
+
+            });
+
+          this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('leftitemnotify', function(event) {
+                var params = {
+                    animated: 'true'
+                }
+                this.setNavBarState(false);
+                navigator.pop(params, function () {
+                })
+            })
+
+            this.$on('todoselect', function(event) {
+                
+                this.yixuanisplay = false;
+                this.daixuanisplay = true;
+            })  
+
+            this.$on('doneselect', function(event) {
+                
+                this.daixuanisplay = false;
+                this. yixuanisplay = true;
+            })
+        },
+        methods: {
+                viewappear:function(){
+                    var self = this;
+                    storage.getItem('person-list', function(e) {
+                    var result = e.result;
+                    
+                    if (result === 'success') {
+                        var data = e.data;
+                        console.log("测试data "+e.data);
+                        console.log("abcdefg");
+                        self.selectedPerson = JSON.parse(data);
+                    } 
+                    });
+
+                    storage.getItem('backTwice', function(e) {
+                    var result = e.result;                  
+                    if (result === 'success' && e.data == '1') {
+                        tools.pop(navigator);
+                        console.log("-=1=-1");
+                    }                     
+                    });
+                }, 
+
+                personList: function(mydeptName,e) {
+                    var vm = this;
+                    var url = this.baseURL;
+                    if (typeof window !== 'object') {
+                        url = this.baseURL + 'new-doc/person-list.js?mydeptName='+encodeURIComponent(mydeptName);
+                        console.log("url的值是:"+url);
+                    }
+                    var params = {'url':url}
+                    navigator.push(params,function(e){
+                    });
+                },
+
+                deleteperson:function(item,e){
+                    var self = this;
+                    console.log("测试 "+item.deptName+"   "+item.name)
+                    console.log('len', self.selectedPerson, self.selectedPerson.length)
+                    for(var i=0;i<self.selectedPerson.length;i++){
+                        if(self.selectedPerson[i].deptName==item.deptName&&self.selectedPerson[i].name ==item.name){
+                            self.selectedPerson.splice(i,1);
+                        }
+                    }
+                    //存储选中人员
+                    storage.setItem('person-list',JSON.stringify(self.selectedPerson), function(e) {});
+                    // console.log("测试"+JSON.stringify(self.selectedPerson));
+                },
+                getOrgInfo: function(userId,userName) {
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: "getToDoDoc", //   getSendTask
+                        methodName: "getOrgInfo"
+                    },
+                    data: {
+                        userId:userId,
+                        userName:userName
+                    }
+                }
+                return json;
+                },
+
+                renderData: function () {
+                    var self = this
+                    var bundleUrl = this.$getConfig().bundleUrl;
+                    console.log("bundleUrl:"+bundleUrl);
+                    var json = self.getOrgInfo("045089","罗文钦");
+                    console.log('get json:', json);
+                    service.fetch(json, function(res) {
+                    try {
+                        self.loading = false;   
+                        var results = res.data || {}
+                        var orgslist = res.data.orgList || {}
+                        for(var i = 0; i < orgslist.length; i++) {
+                            self.detailData.push(orgslist[i])
+                            }
+                        } catch(e) {}
+                    })
+                },
+                
+                changeText:function(str){
+                    return str.replace(/-/g,"\\");
+                },
+
+                setNavBarState:function(hidden){
+
+                    if (hidden == true) {
+                        //隐藏导航栏
+                        var param = {'hidden':'1','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }else {
+                        //显示导航栏
+                        var param = {'hidden':'0','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }
+                }
+        }
+    }
+</script>

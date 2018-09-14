@@ -1,0 +1,118 @@
+<template> 
+  <div class="wrapper" style="background-color:#F0EFF5">
+         <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8"></bx-navbar> 
+         <div class="wrapper" style="margin-top:{{navBarHeight}}">
+            <div class="clickItemArea" repeat="{{item in nextList}}" onclick="clickSwitch()" style="background-color:white">
+                    <text style="margin-left:30;height:100;line-height:100;">{{item.operation}}</text> 
+                    <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://check.png" if="{{item.isDisplay}}"></image>
+            </div>
+        </div>
+  </div>  
+
+</template>  
+
+<script>  
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var modal = require('@weex-module/modal') || {};
+    var storage = require('@weex-module/storage');
+    module.exports = {  
+       created: function() {
+            this.$getConfig(function (config) {
+                var env = config.env;
+                if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+                }
+            }.bind(this));
+            this.baseURL = getBaseURL(this);
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                  animated: 'true'
+                }
+               
+                storage.setItem('select_recordtype',this.selectType, function(e) {
+                });
+                navigator.pop(params, function () {
+                // callback
+                   
+                })
+            })
+        },
+
+        data:{  
+            selectType:'',
+            baseURL: '',
+            navBarHeight: 88,
+            nextList:[
+                {
+                    operation:'外来文',
+                    index:1,
+                    isDisplay: false
+                },
+                {
+                    operation:'呈批文',
+                    index:2,
+                    isDisplay: false
+                },
+                {
+                    operation:'代拟文',
+                    index:3,
+                    isDisplay: false
+                },
+                {
+                    operation:'股份公司',
+                    index:4,
+                    isDisplay: false
+                },
+                {
+                    operation:'合资公司',
+                    index:5,
+                    isDisplay: false
+                },
+             
+            ],
+           
+        },  
+        methods:{  
+            clickSwitch: function(e) {
+                for(var i = 0;i < this.nextList.length;i++){
+                    if(this.$index == i){
+                        this.nextList[i].isDisplay = true;
+                        this.selectType = this.nextList[i].operation+' '+this.nextList[i].index;
+                        const Hulk = new BroadcastChannel('select_recordtype');
+                        Hulk.postMessage(this.selectType);
+                        this.$dispatch('naviBar.leftItem.click', {});
+                    }else{
+                        this.nextList[i].isDisplay = false;
+                    }
+                }
+               
+
+            },
+            
+      
+        }  
+    }  
+</script>  
+
+
+<style>  
+   .clickItemArea{
+        border-bottom-width:1px;
+        border-bottom-color:#dadada;
+        height:100;
+        flex-direction:row;
+        justify-content:space-between;
+    }
+    .wrapper {  
+        position: absolute;  
+        top: 0;  
+        right: 0;  
+        bottom: 0;  
+        left: 0;  
+    }   
+</style>  

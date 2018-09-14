@@ -1,0 +1,278 @@
+<template>
+<div>
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+    <scroller>
+    <div class="titleBar" style="height:80;background-color:#f8f8f8;margin-top:80;" onclick="toAnnotation">
+            <text class="titleText">处理人员</text>
+    </div>
+    <div>
+        <div class="input">
+                <text class="ziti">{{personStr}}</text>
+        </div>
+    </div>
+    <div class="titleBar" style="height:80;background-color:#f8f8f8;">
+            <text class="titleText">操作记录</text>
+    </div>
+    <div repeat="{{item in detailData }}" >
+        <div class="opinionArea" style="padding-bottom:40">
+                <div class="opinionMode">
+                    <div class="titleArea">
+                        <div class="modelLeft">
+                            <image style="width:70;height:70;" src="local://depart_opinion.png"></image>
+                        </div>
+                        <text class="modelRight" style="font-size:28">{{item.flowContent}}</text>
+                    </div> 
+                    <div class="dateArea">
+                        <text class="modelLeft"></text>
+                        <div class="modelRight">
+                            <text style="font-size:25;color:#6b6969;">{{item.flowUser}}</text>
+                            <text style="color:#6b6969;font-size:25;">{{item.flowTime}}</text>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div> 
+  </scroller>
+</template>
+
+<style>
+    .wrapper { 
+        width: 750;
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        bottom: 0;
+        align-items: center;
+        justify-content: center;
+    }
+    .text {
+        font-size:32;
+        font-family: "Open Sans", sans-serif;
+    }
+    .opinionArea{
+        background-color:#f8f8f8;
+        padding-left:20;
+        padding-right:20;
+    }
+    .opinionMode{
+        background-color:white;
+        padding-right:20;
+        padding-bottom:40;
+    }
+    .titleArea{
+        flex-direction:row;
+        padding-top:20;
+    }
+    .modelLeft{
+        flex:1;
+        align-items: center; 
+        padding-bottom:20;
+    }
+    .dateArea{
+        flex-direction:row;
+    }
+    .modelRight{
+        flex:5;
+        flex-direction:row;
+        justify-content:space-between;
+        margin-right:10;
+        margin-top:15;
+    }
+    .hintword{
+        font-size:30;
+        margin-left:16;
+        margin-top:16;
+        color:#989898;
+    
+    }
+    .hint{
+        background-color:#f8f8f8;
+        height:60;
+    }
+    .input{
+        flex-direction:row;
+        flex:5;
+        border-width: 1px;
+        border-style: solid;
+        border-color: #dadada;
+    }
+    .ziti{
+        flex:5;
+        flex-direction:row;
+        justify-content:space-between;
+        font-size:28;
+        letter-spacing:10;
+        color:#373737;
+        line-height:60;
+        margin-left:40;
+        border:none;
+    }
+    .fujian{
+        height:300;
+        border-width: 2px;
+        border-style: solid;
+        border-color: #dadada;
+        margin-left:30;
+        margin-right:30;
+        border-radius:10;
+    }
+    .tabbar {
+    background-color: #fff;
+  }
+    .titleBar{
+        height:100;
+        align-items: center; 
+        justify-content: flex-start;
+        flex-direction:row;  
+        padding-left:20;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-bottom-color:#f2f2f2;
+		}
+    .titleText{
+        font-size:22;
+        color:#bbbbbb;
+		}
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-navbar.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var getParameterByName = require('../include/tools.js').methods.getParameterByName;
+   var service = require('@weex-module/service') || {}
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            text: '待办公文',
+            title: '处理流程',
+            navBarHeight: 88,
+            detailData:[],
+            nameData:[],
+            docId: '',
+            personStr:''
+        },
+
+        created: function() {
+          this.$getConfig(function (config) {
+            var env = config.env;
+            if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+            }
+          }.bind(this));
+
+          this.renderData()
+
+          this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+            // When a notify comes, this handler will be run.
+            // `event.detail` will be `{a: 1}`
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+
+                })
+            }) 
+        },
+        methods: {
+    toAnnotation: function(e) {
+        var vm = this;
+        var url = this.baseURL;
+        if (typeof window !== 'object') {
+            url = this.baseURL + 'todo-doc/annotation.js?docId='+vm.docId;
+            }
+            var params = {'url':url}
+            navigator.push(params,function(e){
+            });
+        },
+
+    getLogInfo: function(docId) {
+	  var json = {
+		attr: {
+		    projectName: "1800OAProject",
+		    serviceName: "getToDoDoc", //   getSendTask
+		    methodName: "getLogInfo"
+		},
+		data: {
+		    docId:docId
+        }
+      }
+      return json;
+    },
+
+    renderData: function () {
+      var self = this
+      var bundleUrl = this.$getConfig().bundleUrl;
+      var docId = getParameterByName("docId",bundleUrl);
+      console.log("bundleUrl:"+bundleUrl);
+      console.log("docId:"+docId);
+      var json = self.getLogInfo(docId);
+      console.log('get json:', json);
+      service.fetch(json, function(res) {
+        try {
+            var results = res.data || {}
+            // self.text = JSON.stringify(res);
+            console.log("text:"+JSON.stringify(res));
+            console.log("results:"+JSON.stringify(results));
+            var operation = JSON.stringify(results.flowLogs);
+            var flowLogs = res.data.flowLogs || {}
+            for(var i = 0; i < flowLogs.length; i++) {
+                  self.detailData.push(flowLogs[i])
+                }
+            // var osAuthors = res.data.osAuthors || {}
+            var userNames = res.data.osAuthors;
+            var newArray=new Array(userNames.length);
+            console.log("userNames:"+JSON.stringify(userNames));
+            // var UserNames = JSON.stringify(userNames);
+            console.log("UserNames的值是："+userNames[0].userName);
+            for(var i=0;i<userNames.length;i++){
+                newArray[i] = userNames[i].userName;
+                console.log("values的最终值是:"+newArray);
+            }
+            for(var i=0;i<newArray.length;i++){
+                // console.log("newArray:"+newArray);
+                    // self.nameData.push(newArray[i]);
+                    self.personStr+=newArray[i];
+                    if(i != newArray.length-1){
+                        self.personStr += ",";
+                    }
+                    
+                    
+            }
+            // self.personStr = newArray;
+                    // console.log("values的最终值是:"+values);
+                    // self.nameData.push(values);
+            // for(var key in UserNames)
+            // {
+            // console.log("Key是:" + key);
+            // console.log("对应的值是:" + UserNames[key]);
+            // }
+            // console.log("Jvalue:"+userNames[''+key+'']);
+            // for(var userName in userNames){  
+            //     if(userName==key){  
+            //         var jValue=userNames[userName];
+            //         console.log("jValue:"+jValue);  
+            //     }  
+            // }
+            // var name = JSON.stringify(userNames);
+            // var name1 = name[''+userName+''];
+            // console.log("name1:"+name1);
+            // for(var i = 0; i < osAuthors.length; i++) {
+            //       self.nameData.push(osAuthors[i])
+            //     }
+            
+            
+        } catch(e) {}
+      })
+    }
+        }
+    }
+</script>

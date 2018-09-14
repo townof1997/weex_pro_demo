@@ -1,0 +1,12 @@
+#!/bin/bash
+# called by native
+THIS_DIR=$(dirname "$0")
+pushd "$THIS_DIR"
+
+npm run build:native
+npm run build:browser
+npm run serve & 
+# npm run dev:examples
+npm run dev:official_doc
+
+popd

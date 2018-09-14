@@ -1,0 +1,89 @@
+<template>
+    <div class="wrapper">
+        <bx-navbar height={{navBarHeight}} rightbuttons="{{rightbuttons}}" background-color="#F9F9F9" title={{title}} title-color="#3A3A3A"></bx-navbar>
+        <bx-doclist1 list-icon="{{listIcon}}" acclaime-icon="{{acclaimeIcon}}" chat-icon="{{chatIcon}}" service-name="{{serviceName}}" cell-click-url="{{cellClickUrl}}" style="margin-top:{{navBarHeight}}"></bx-doclist1>
+ 	</div>
+</template>
+
+<style>
+  	.wrapper {
+  		position: absolute; 
+  		top: 0; 
+  		left: 0; 
+  		right: 0; 
+  		bottom: 0; 
+  		width: 750;
+  	}
+</style>
+
+<script>
+  require('weex-components');
+  require('../components/bx-navbar.we');
+  require('../components/bx-doclist1.we');
+  var navigator = require('@weex-module/navigator');
+  var getBaseURL = require('../include/base-url.js').getBaseURL;
+  var tools = require('../include/tools.js').methods;
+  var setNavBarHeight = require('../include/tools.js').methods.setNavBarHeight;
+  module.exports = {
+
+    data: {
+      // dir: 'official_doc',
+      navBarHeight: 88,
+      title: '共享文档',
+    //   baseURL: '',
+      rightbuttons:[
+        {
+          rightItemSrc:"local://bar_search.png"
+        },
+        {
+          rightItemSrc:"local://classification.png"
+        }
+      ],
+      listIcon: 'local://righticon.png',
+      acclaimeIcon: 'local://praise_icon.png',
+      chatIcon: 'local://comment.png',
+      serviceName: 'getToDoDoc',
+      cellClickUrl: 'sharedocs/doc-detailed-content.js'
+    },
+
+    created: function() {
+      //iOS配置
+      setNavBarHeight(this);
+
+      this.baseURL = getBaseURL(this);
+
+      //返回按钮点击事件
+      this.$on('naviBar.leftItem.click', function(event) {
+        // When a notify comes, this handler will be run.
+        // `event.detail` will be `{a: 1}`
+        var params = {
+          animated: 'true'
+        }
+        navigator.pop(params, function () {
+        // callback
+        })
+      });
+
+      //navbar右侧图标点击事件
+      this.$on('naviBar.rightItem.click', function(event) {
+        var vm = this;
+        var url = this.baseURL;
+        if (typeof window !== 'object') {
+          // var docId = this.items[this.$index].documentKey;
+          var index = event.detail.index;
+          if(index == 0){
+            url = this.baseURL + 'search-doc/query.js';
+          }else if(index == 1){
+            //url = this.baseURL + 'new-doc/new-doc.js';
+            url = this.baseURL + 'sharedocs/doc-detailed.js';
+          } 
+        }
+        var params = {'url':url};
+        navigator.push(params,function(e){
+        });
+      })
+    }
+
+  }
+
+</script>

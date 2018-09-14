@@ -1,0 +1,325 @@
+<template>
+   <div class="wrapper">
+   <bx-navbar height={{navBarHeight}} rightbuttons="{{rightbuttons}}" backitemsrc="local://back_button.png" backitemtitle="在办" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+   <div class="wrapper" style="margin-top:{{navBarHeight}}">
+     <list class="list">
+        <refresh style="width: 750; padding: 30;align-items: center;" onrefresh="refreshData" display="{{refreshDisplay}}">
+          <text class="text">{{refreshText}}</text>
+          <loading-indicator></loading-indicator>
+        </refresh>
+       <cell onclick="oncellclick" repeat="{{todoItem in items}}">
+         <div class="cellStyle">
+            <div class="leftArea">
+                <image  style="width:50;height:50;margin-left:25" src="local://doing_list_icon.png"></image>
+            </div>
+            <div class="centerArea">
+                <text  style="font-size:28;">{{todoItem.title}}</text>
+                <div style="flex-direction:row;margin-top:20">
+                    <text class="greyText">{{todoItem.createUser}}</text>
+                    <text class="greyText" style="margin-left:10">{{todoItem.fileID}}</text>
+                </div>
+            </div>
+            <div class="rightArea">
+                <text class="dateText">{{todoItem.createDate}}</text>
+            </div>
+        </div>
+      </cell>
+      <loading onloading="loadingData" style="width: 750; padding: 10;background-color:#F7F8F7;align-items: center;" if="{{isLoading}}" display="{{loadingDisplay}}">
+        <text class="text">{{loadingText}}</text>
+      </loading>
+    </list>
+    <bx-loading if={{loading}}></bx-loading>
+    </div>
+    
+  </div>
+</template>
+
+<style>
+    .text{
+      color:#939393;
+      font-size:24;
+    }
+    .wrapper {
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0; 
+      width: 750;
+      background-color:#F0EFF5;
+    }
+  .cellStyle{
+      flex-direction:row;
+      border-bottom-style:solid;
+      border-bottom-width:1px;
+      border-bottom-color:#f2f2f2;
+      padding-top:20;
+      padding-bottom:20;
+      background-color: white;
+  }
+
+  .leftArea{
+      flex:1;
+  }
+
+  .greyText{
+      color:#6b6969;
+      font-size:20;
+  }
+
+  .dateText{
+      color:#6b6969;
+      font-size:22;
+      margin-left:30;
+  }
+
+  .centerArea{
+      flex:5;
+  }
+
+  .rightArea{
+      flex:2;
+  }
+
+  .list {
+  
+  }
+  .count {
+    font-size: 48;
+    margin:10;
+  }
+  .indicator {
+    height: 40;
+    width: 40;
+    color:#45b5f0;
+  }
+
+  .refresh-arrow {
+    font-size: 30px;
+    color: #45b5f0;
+  }
+
+  .row {
+    width: 750;
+  }
+  
+  .item {
+    justify-content: center;
+    border-bottom-width: 2;
+    border-bottom-color: #c0c0c0;
+    height: 100;
+    padding:20;
+  }
+  .item-title {
+  }
+  .refresh-view {
+    height: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .indicator {
+    height: 60;
+    width: 60;
+    color: #889967;
+  }
+</style>
+
+<script>
+  require('weex-components');
+  require('../components/bx-navbar.we');
+  require('../components/bx-loading.we');
+  var navigator = require('@weex-module/navigator');
+  var service = require('@weex-module/service') || {};
+  var getBaseURL = require('../include/base-url.js').getBaseURL;
+  var tools = require('../include/tools.js').methods;
+  var setNavBarHeight = require('../include/tools.js').methods.setNavBarHeight;
+  module.exports = {
+
+    data: {
+      dir: 'official_doc',
+      navBarHeight: 88,
+      title: '在办公文',
+      isLoaded: true,
+      isLoading: false,
+      loadingText: '更多 ···',
+      refreshText:'↓ 下拉刷新',
+      baseURL: '',
+      totalCount: 0,
+      loading: true,
+      loadingDisplay: 'hide',
+      refreshDisplay: 'hide',
+      page: 1,
+      items:[],
+      rightbuttons:[
+        {
+          rightItemSrc:"local://bar_search.png"
+        },
+        {
+          rightItemSrc:"local://bar_new.png"
+        }
+      ],
+      userName: '',
+      userId: ''
+    },
+
+    created: function() {
+      var self = this;
+      //iOS配置
+      setNavBarHeight(this);
+      /*获取用户信息*/
+      weex.requireModule('user').getUserInfo(function(info){
+        console.log('获取登陆信息并存储' ,info);
+        
+        self.userName = info.attr.parameter_username;
+        self.userId = info.attr.parameter_userid;
+
+        //数据加载
+        self.renderData();
+
+      });
+
+      self.baseURL = getBaseURL(this);
+
+      this.$on('naviBar.leftItem.click', function(event) {
+        // When a notify comes, this handler will be run.
+        // `event.detail` will be `{a: 1}`
+        var params = {
+          animated: 'true'
+        }
+        navigator.pop(params, function () {
+        // callback
+        })
+      });
+
+      this.$on('naviBar.rightItem.click', function(event) {
+        // When a notify comes, this handler will be run.
+        // `event.detail` will be `{a: 1}`
+        var vm = this;
+        var url = this.baseURL;
+        if (typeof window !== 'object') {
+          // var docId = this.items[this.$index].documentKey;
+          var index = event.detail.index;
+          if(index == 0){
+            url = this.baseURL + 'search-doc/query.js';
+          }else if(index == 1){
+            url = this.baseURL + 'new-doc/new-doc.js';
+          } 
+        }
+        var params = {'url':url};
+        // console.log('todoList', url);
+        // vm.$call('modal', 'toast', {
+        //   'message': url
+        // });
+        navigator.push(params,function(e){
+        });
+      })
+    },
+
+    methods: {
+
+      oncellclick: function(e) {
+        //显示点击列表项位置
+        var vm = this;
+        var url = this.baseURL;
+        if (typeof window !== 'object') {
+          var docId = this.items[this.$index].documentKey;
+          url = this.baseURL + 'doing-doc/doing-detail.js?docId='+docId;
+        }
+        var params = {'url':url,'docId':docId};
+        console.log('todoList', url);
+        // vm.$call('modal', 'toast', {
+        //   'message': url
+        // });
+        navigator.push(params,function(e){
+        });
+      },
+      getHQTaskList: function(userName,userId,page) {
+        var json = {
+          attr: {
+            projectName: "1800OAProject",
+            serviceName: "getDoingDoc", //   getSendTask
+            methodName: "getTaskList"
+          },
+          data: {
+            userName: userName,
+            userId: userId,
+            page: page
+          }
+        }
+        return json;
+      },
+      renderData: function () {
+        var self = this
+        var json = self.getHQTaskList("王崇旭", "049140", this.page.toString());
+        var service = require('@weex-module/service') || {};
+        service.fetch(json, function(res) {
+        
+        self.loadingDisplay = 'hide';
+        self.loading = false;
+        self.isLoading = true;
+        try {
+          if (res.status == -1) {
+            modal.toast({
+              'message': '链接服务器超时，请稍候再试', 
+              'duration': 2
+            });
+            self.isLoading = false;
+            return;
+          }
+
+          var docs = res.data.docs || []
+          if (docs.length == 0) {
+            modal.toast({
+              'message': '登录信息过期，请重新登录', 
+              'duration': 2
+            });
+            self.isLoading = false;
+            return;
+          }
+
+          self.totalCount = res.data.totalCount;
+          console.log('get docs', res.data.docs);
+          if (Array.isArray(docs)) {
+            if (self.page == 1) {
+              self.items = [];
+            }
+            for(var i = 0; i < docs.length; i++) {
+              self.items.push(docs[i])
+            }
+          }
+          if (self.items.length == res.data.totalCount)  {
+            self.isLoading = false;
+          }
+          self.isLoaded = true
+          
+          self.refreshDisplay = 'hide'
+          setTimeout(function () {
+            self.refreshText='↓ 下拉刷新'
+          }.bind(this), 1000)
+          
+          } catch(e) {}
+        })
+      },
+      loadingData: function (e) {
+        var self = this
+        if (self.isLoaded === false) return 
+            
+        self.loadingDisplay = 'show'
+        self.renderData()
+        self.page++
+      },
+
+      refreshData: function (e) {
+        if (this.isLoaded === false) return 
+      
+        this.refreshText='↑ 释放更新';
+        this.refreshDisplay = 'show'
+        this.loading = true
+        this.page = 1
+        this.renderData()
+        
+      }
+    },
+    
+  }
+</script>

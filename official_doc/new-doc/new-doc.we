@@ -1,0 +1,453 @@
+<template>
+<div onviewappear="{{viewappear}}" >
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="待办" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+        <scroller style="margin-top:{{navBarHeight}}">
+            <div class="titleBar" style="height:80;background-color:#F0EFF5">
+                <text class="titleText">基本信息</text>
+            </div>
+            <div class="contentpage" onclick="onSecretLever()">
+                 <text class="leftfont">密级</text>
+                 <text class="rightfont">{{type1}}</text>
+                 <image style="width:30;height:30;margin-right:20;" src="local://right_icon.png"></image>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">公文类别</text>
+                 <text style="height:100;line-height:100;margin-right:30;">其他</text>
+            </div>
+            <div class="contentpage" onclick="onRecordType()">
+                 <text class="leftfont">公文文种</text>
+                 <text class="rightfont">{{type3}}</text>
+                 <image style="width:30;height:30;margin-right:20;" src="local://right_icon.png"></image>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">来文单位</text>
+                 <input type="text" placeholder="请输入来文单位" class="inputstyle" :autofocus=true value="" @change="onchange" @input="oninput" @focus="onfocus" @blur="onblur"/>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">来文日期</text>
+                 <text style="font-size:32;color:black;width:500;height:40;" onclick="pickDate()"> {{datevalue}} </text>  
+                 <image class="input-img" src="local://time.png"  onclick="pickDate()"></image>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">文件名称</text>
+                 <input type="text" placeholder="请输入文件名称" class="inputstyle" :autofocus=true value="" @change="onchange" @input="oninput" @focus="onfocus" @blur="onblur"/>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">拟办待办</text>
+                 <input type="text" placeholder="请输入内容" class="inputstyle" :autofocus=true value="" @change="onchange" @input="oninput" @focus="onfocus" @blur="onblur"/>
+            </div>
+            
+            <div class="titleBar" style="height:80;background-color:#F0EFF5;">
+                <text class="titleText">处理提示：请选择您要提交的人员！</text>
+            </div>
+            <div class="contentpage" onclick="selectPerson">
+                 <text class="leftfont">选择人员</text>
+                 <image style="width:30;height:30;margin-right:20;" src="local://right_icon.png"></image>
+            </div>
+            <div class="titleBar" style="height:80;background-color:#F0EFF5;">
+                <text class="titleText">已选人员</text>
+            </div>
+            <div>
+                <div style="flex:5;border-width:1px;border-color:#dadada;flex-direction:row;min-height:100;">
+                    <text style="flex:5;flex-direction:row;justify-content:space-between;margin-left:30;line-height:100;">{{selectname}}</text>
+                </div>
+            </div>
+            <div class="titleBar" style="height:80;background-color:#F0EFF5;">
+                <text class="titleText">预设群组</text>
+            </div>
+            <div class="contentpage" repeat="{{item in groupList}}" onclick="onSelect">
+                <text class="leftfont">{{item.name}}</text>
+                <image style="width:30;height:30;margin-right:20;" src="local://check.png" if="{{groupListSelect[$index]}}"></image>
+            </div>
+            <div class="contentpage" if={{isNoGroup}}>
+                <text class="leftfont">无群组</text>
+            </div>
+
+            <div style="flex-direction: row; flex-wrap: wrap; margin-left:3">
+                <div repeat = "image in imageScr">
+                    <image style = "height:186; width:186" src="{{image.imgUrl}}" onlongpress = "delDisplay" onclick = "cancaleDel">
+                        <image class = "image-del" src = "local://del_image.png" if = "{{imageDisplay}}" onclick = "delImage"></image>
+                    </image>
+                </div>
+
+                <div style=";width:186;height:186;border-color:#F0EFF5;border-width:1; background-color:#F0EFF5" onclick = "getphoto" if= "{{addDisplay}}">
+                <text style="text-align:center;font-size:60;padding-top:40;">+</text><br>
+                <text style="text-align:center;font-size:26">添加图片</text>
+                </div>
+            </div>
+
+            <div style="flex-direction: row;margin-top:70;space-between; margin-bottom:60">
+                <text class="button" value="提交" type="primary" @click="focus"></text>
+            </div>
+        </scroller>
+</div> 
+  
+</template>
+
+<style>
+    .titleBar{
+        height:100;
+        align-items: center; 
+        justify-content: flex-start;
+        flex-direction:row;  
+        padding-left:20;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-bottom-color:#f2f2f2;
+		}
+    .titleText{
+        font-size:30;
+        color:#bbbbbb;
+		}
+    .contentpage{
+      border-bottom-width:1px;
+      border-bottom-color:#dadada;
+      height:100;
+      flex-direction:row;
+      align-items:center;
+    }
+    .leftfont{
+      flex:5;
+      flex-direction:row;
+      justify-content:space-between;
+      margin-left:30;
+
+    }
+    .rightfont{
+      margin-left:390;
+      height:100;
+      line-height:100;
+    }
+    .inputstyle{
+      placeholder-color:#9b9b9b;
+      color:black;
+      height:50;
+      width:500;
+      margin-left:-10;
+
+    }
+    .button {
+        height:100;
+        border-radius:10;
+        font-size: 36;
+        width: 650;
+        color: white;
+        text-align: center;
+        padding-top: 25;
+        border-width: 2;
+        border-style: solid;
+        margin-left:50;
+        border-color: rgb(162, 217, 192);
+        background-color: #3CB0FC;
+        }
+    .input-img{
+        position: absolute;  
+        top:25;  
+        right: 30;  
+        width: 40;  
+        height: 40;  
+        outline: none;  
+    }
+    .image-del{
+        position: absolute;
+        right: 20;
+        top:20;
+        width: 50;
+        height: 50;
+    }
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-navbar.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var getParameterByName = require('../include/tools.js').methods.getParameterByName;
+   var service = require('@weex-module/service') || {}
+   var storage = require('@weex-module/storage');
+   var modal = require('@weex-module/modal');
+
+
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            text: '新建公文',
+            title: '新建公文',
+            navBarHeight: 88,
+            detailData:[],
+            nameData:[],
+            docId: '',
+            personStr:'',
+            dir: 'official_doc',
+            selectname:'',
+            groupList: [],
+            groupListSelect: [],
+            datevalue: '',
+            type1:'',
+            type1Index:'',
+            type2:'',
+            type2Index:'',
+            type3:'',
+            type3Index:'',
+            imageScr:[],    //存储 手机本地照片
+            imageWidth:750,
+            imageDisplay: false,    //控制照片删除按钮
+            addDisplay: true,   //添加照片控制
+            isNoGroup: false
+        },
+
+        computed: {
+            imageArray: function(){
+                return unique(this.imageScr)
+            },
+        },
+
+        created: function() {
+          this.$getConfig(function (config) {
+            var env = config.env;
+            if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+            }
+          }.bind(this));
+
+          weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+        
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+
+                //数据加载
+                self.renderData();
+
+            });
+
+          this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+                    storage.removeItem('person-list', function (e) {
+                })
+                })
+            }); 
+
+            var self = this;
+            const Stack1 = new BroadcastChannel('select_level');
+            Stack1.onmessage = function (event) { 
+                var str = event.data.split(' ');
+                self.type1 = str[0];
+                self.type1Index = str[1];
+            }
+
+            const Stack2 = new BroadcastChannel('select_category');
+            Stack2.onmessage = function (event) { 
+                var str = event.data.split(' ');
+                self.type2 = str[0];
+                self.type2Index = str[1];
+            }
+            const Stack3 = new BroadcastChannel('select_recordtype');
+            Stack3.onmessage = function (event) { 
+                var str = event.data.split(' ');
+                self.type3 = str[0];
+                self.type3Index = str[1];
+            }
+            Stack3.close;
+        },
+        methods: {
+                viewappear:function(){
+                    this.setNavBarState(false)
+                    storage.setItem('backTwice', '0', function(e) {
+                    });
+                    console.log("abcdefg");
+                    var self = this;
+                    console.log("-1-1-1-1-1-1");
+                    storage.getItem('person-list', function(e) {
+                    var result = e.result;
+                     
+                    self.selectname = "";
+                    if (result === 'success') {
+                        var data = JSON.parse(e.data);
+                        for(var i=0;i<data.length;i++){
+                            self.selectname += data[i].name;
+                            if(i!=data.length-1){
+                                self.selectname += ";";
+                            }
+                        }
+                    } 
+                    
+                    });
+                },
+                 
+                onSecretLever:function(){
+                    var vm = this;
+                    var url = this.baseURL;
+                    if (typeof window !== 'object') {
+                    url = this.baseURL + 'new-doc/select-level.js';
+                }
+                var params = {'url':url}
+                    navigator.push(params,function(e){
+                    });
+                },
+                onCategory:function(){
+                    var vm = this;
+                    var url = this.baseURL;
+                    if (typeof window !== 'object') {
+                    url = this.baseURL + 'new-doc/select-category.js';
+                }
+                var params = {'url':url}
+                    navigator.push(params,function(e){
+                    });
+                },
+                onRecordType:function(){
+                    var vm = this;
+                    var url = this.baseURL;
+                    if (typeof window !== 'object') {
+                    url = this.baseURL + 'new-doc/select-recordtype.js';
+                }
+                var params = {'url':url}
+                    navigator.push(params,function(e){
+                    });
+                },
+
+                pickDate: function(i) {
+                var picker = require('@weex-module/picker');
+                var self = this;
+                picker.pickDate({
+                    'value':this.value,
+                    'max':'2029-11-28',
+                    'min':'2015-11-28'
+                },function (ret) {
+                    var result = ret.result;
+                    if(result == 'success'){
+                        self.datevalue = ret.data;
+                        }
+                    });
+                },
+                selectPerson: function(e) {
+                var vm = this;
+                var url = this.baseURL;
+                if (typeof window !== 'object') {
+                url = this.baseURL + 'new-doc/select-person.js';
+                }
+                var params = {'url':url}
+                navigator.push(params,function(e){
+                });
+                },
+                onSelect: function(e) {
+                this.groupListSelect.$set(this.$index, !this.groupListSelect[this.$index]);
+                },
+                getGroupList: function(userId,userName) {
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: "getToDoDoc", //   getSendTask
+                        methodName: "getMyGroup"
+                    },
+                    data: {
+                        userId:userId,
+                        userName:userName
+                    }
+                }
+                return json;
+                },
+                renderData: function () {
+                var self = this
+                var bundleUrl = this.$getConfig().bundleUrl;
+                console.log("bundleUrl:"+bundleUrl);
+                  var json = self.getGroupList(self.userId,self.userName);
+                console.log('get json123:', json);
+                service.fetch(json, function(res) {
+                    try {   
+                        console.log('-------res123',res);
+                        var groups = res.data.groupList;
+                        console.log('----groups',JSON.stringify(res.data.groupList));
+                        if(groups.length == 0){
+                            self.isNoGroup = true;
+                        }
+                        for(var i = 0; i < groups.length; i++) {
+                            self.groupList.push(groups[i])
+                            self.groupListSelect.push(false);
+                        }
+                        console.log('---groupList',JSON.stringify(self.groupList));
+                        } catch(e) {}
+                    })
+                },
+
+
+                //获取系统相册， 拍照 照片
+                getphoto:function(e){
+                    if (this.imageDisplay == true) {
+                        this.imageDisplay = false
+                    }
+                    var self = this;
+                    var photo = require('@weex-module/cameraUtils')
+                    photo.captureImage(function(e){
+
+                        var photoImage = e
+                        console.log('src', photoImage)
+                        for (var i = 0; i < photoImage.length; i++) {
+                            for (var i = 0; i < photoImage.length; i++) {
+                                if (self.imageScr.length > 8) {
+                                    self.addDisplay = false
+                                    modal.toast({
+                                      'message': '最多9张图片',
+                                      'duration': 1
+                                    });
+                                    return
+                                }
+                                self.imageScr.push({'imgUrl': photoImage[i].imgUrl, 'imgData': photoImage[i].imgData})
+                                console.log('------------src', photoImage[i].imgUrl)
+                            }
+                        }
+                        if (self.imageScr.length > 8) {
+                            self.addDisplay = false
+                        }
+                        
+                    })
+                },
+
+                delDisplay: function(){
+                    this.imageDisplay = true
+                },
+
+                cancaleDel: function(){
+                    this.imageDisplay = false
+                },
+
+                delImage: function(){
+                    var index = this.$index;
+                    this.imageScr.splice(index, 1)
+
+                    if (this.imageScr.length == 0) {
+                        this.imageDisplay = false
+                    }
+                    if (this.imageScr.length < 9) {
+                        this.addDisplay = true
+                    }
+                },
+                setNavBarState:function(hidden){
+
+                    if (hidden == true) {
+                        //隐藏导航栏
+                        var param = {'hidden':'1','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }else {
+                        //显示导航栏
+                        var param = {'hidden':'0','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }
+                },
+        }
+    }
+</script>

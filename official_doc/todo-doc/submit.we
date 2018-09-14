@@ -1,0 +1,332 @@
+<template>
+<div onviewappear="{{viewappear}}">
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+        <scroller style="margin-top:{{navBarHeight}}">
+            <div class="titleBar" style="height:80;background-color:#f8f8f8">
+                <text class="titleText">填写意见</text>
+            </div>
+            <textarea placeholder="请输入意见" style="height:200;margin:20" oninput="getAdvice"></textarea>
+
+            <div class="contentpage" onclick="selectPerson">
+                 <text class="leftfont">选择人员</text>
+                 <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://right_icon.png"></image>
+            </div>
+            <div class="titleBar" style="height:100;background-color:#f8f8f8;">
+                <text class="titleText">已选人员</text>
+            </div>
+            <div class="contentpage">
+                 <text class="leftfont">{{selectname}}</text>
+            </div>
+            <div class="titleBar" style="height:100;background-color:#f8f8f8;">
+                <text class="titleText">预设群组</text>
+            </div>
+            <div class="contentpage" repeat="{{item in groupList}}" onclick="onSelect">
+                <text class="leftfont">{{item.name}}</text>
+                <image style="width:30;height:30;margin-top:38;margin-right:20;" src="local://check.png" if="{{groupListSelect[$index]}}"></image>
+            </div>
+            <div class="contentpage" if={{isNoGroup}}>
+                <text class="leftfont">无群组</text>
+            </div>
+            <div style="flex-direction: row;margin-top:70;justify-content: space-between" onclick="submit" disabled="{{isDisabled}}">
+                <text class="button" value="提交" type="primary"></text>
+            </div>
+        </scroller>
+</div> 
+  
+</template>
+
+<style>
+    .titleBar{
+        height:100;
+        align-items: center; 
+        justify-content: flex-start;
+        flex-direction:row;  
+        padding-left:20;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-bottom-color:#dadada;
+		}
+    .titleText{
+        font-size:30;
+        color:#bbbbbb;
+		}
+    .contentpage{
+      border-width:1px;
+      border-color:#dadada;
+      height:100;
+      flex-direction:row;
+      justify-content:space-between;
+    }
+    .leftfont{
+      margin-left:30;
+      height:100;
+      line-height:100;
+      font-size:35
+    }
+    .rightfont{
+      margin-left:390;
+      height:100;
+      line-height:100;
+    }
+    .inputstyle{
+      height:50;
+      width:500;
+      margin-left:-10;
+      margin-top:20;
+    }
+    .button {
+        height:100;
+        border-radius:10;
+        font-size: 36;
+        width: 650;
+        color: white;
+        text-align: center;
+        padding-top: 25;
+        border-width: 2;
+        border-style: solid;
+        margin-left:50;
+        border-color: rgb(162, 217, 192);
+        background-color: #3CB0FC;
+        }
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-navbar.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var tools = require('../include/tools.js').methods;
+   var service = require('@weex-module/service') || {};
+   var storage = require('@weex-module/storage');
+   var modal = require('@weex-module/modal') || {};
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            text: '新建公文',
+            title: '提交',
+            navBarHeight: 88,
+            detailData:[],
+            nameData:[],
+            docId: '',
+            personStr:'',
+            dir: 'official_doc',
+            selectname:'',
+            groupList: [],
+            groupListSelect: [],
+            advice: '',
+            userName: '',
+            userId: '',
+            isDisabled: false,
+            isNoGroup: false
+        },
+
+        created: function() {
+            var self = this;
+            //iOS配置
+            tools.setNavBarHeight(this);
+
+            /*获取用户信息*/
+            weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+        
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+
+                //数据加载
+                self.renderData();
+
+            });
+
+          this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+
+                })
+            }) 
+        },
+        methods: {
+            //获取意见
+            getAdvice:function(event){
+                this.advice = event.value;
+                // console.log('advice----------',.advice);
+            },
+            //获取提交接口json格式参数
+            submitFlow: function(docId,nextStep,advice,choosePeopleList,chooseGroupList,curUsername,curUserId) {
+	            var json = {
+		            attr: {
+		                projectName: "1800OAProject",
+		                serviceName: "submitDocBNA", //   getSendTask
+		                methodName: "submitFlow"
+		            },
+		            data: {
+		                docId: docId,
+                        nextStep: nextStep,
+                        advice: advice,
+                        choosePeopleList: choosePeopleList,
+                        chooseGroupList: chooseGroupList,
+                        curUsername: curUsername,
+                        curUserId: curUserId
+                    }
+                }
+                return json;
+            },
+            //提交按钮点击事件
+            submit: function(){
+                var self = this;
+                self.isDisabled = true;
+                var bundleUrl = self.$getConfig().bundleUrl;
+                var getParameterByName = tools.getParameterByName;
+                //获取跳转传递的参数
+                var docId = getParameterByName("docId",bundleUrl);
+                var nextStep = getParameterByName("nextStep",bundleUrl);
+                var chooseGroupList = '';
+                for(var i = 0; i < self.groupListSelect.length;i++){
+                    if(self.groupListSelect[i]){
+                        if(i == self.groupListSelect.length-1){
+                            chooseGroupList += self.groupList[i].name;
+                        }else{
+                            chooseGroupList += self.groupList[i].name+';';
+                        }
+                        
+                    }
+                }
+                var advice = self.advice;
+                // if(advice != '' && advice != '请输入意见'){
+                    var selectname = self.selectname;
+                    if(selectname != ''){
+                        var json = self.submitFlow(docId,nextStep,advice,selectname,chooseGroupList,self.userName,self.userId);
+                        console.log('json---------------',json);
+                        service.fetch(json, function(res) {
+                            try {
+                                console.log('---submitFlow',res);
+                                // var url = self.baseURL;
+                                // if (typeof window !== 'object') {
+                                //     url = self.baseURL + 'todo/to-do-list.js';
+                                //     // console.log("url的值是:"+url);
+                                // }
+                                // var params = { 'url': url }
+                                // // console.log('push url', url);
+                                // navigator.pop(params, function(e) {});
+                                tools.pop(navigator);
+                                //控制连续两次返回
+                                storage.setItem('backTwice', '1', function(e) {
+                                });
+                                //控制刷新列表页面
+                                storage.setItem('refreshList', '1', function(e) {
+                                });
+                                self.isDisabled = false;
+                                modal.toast({ 'message': '提交成功',  'duration': 2});
+                            } catch(e) {}
+                        })
+                    }else{
+                        modal.toast({ 'message': '已选人员为空',  'duration': 2});
+                    }
+                // }else{
+                //     modal.toast({ 'message': '意见为空',  'duration': 2});
+                // }
+                
+            },
+            //展示已选择人员
+            viewappear:function(){
+                var self = this;
+                this.setNavBarState(false)
+                storage.setItem('backTwice', '0', function(e) {
+                });
+                storage.getItem('person-list', function(e) {
+                    var result = e.result;                  
+                    if (result === 'success') {
+                        var data = JSON.parse(e.data); 
+                        self.selectname = "";
+                        for(var i=0;i<data.length;i++){
+                            self.selectname += data[i].name;
+                            if(i!=data.length-1){
+                                self.selectname += ";";
+                            }
+                        }
+                    }                     
+                    
+                });
+            },
+
+            setNavBarState:function(hidden){
+
+                    if (hidden == true) {
+                        //隐藏导航栏
+                        var param = {'hidden':'1','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }else {
+                        //显示导航栏
+                        var param = {'hidden':'0','animated':'0'};
+                        navigator.setNavBarHidden(param, function(e){
+                            console.log('hidden', param);
+                            
+                        });
+                    }
+            },
+
+
+            selectPerson: function(e) {
+                var vm = this;
+                var url = this.baseURL;
+                if (typeof window !== 'object') {
+                    url = this.baseURL + 'new-doc/select-person.js';
+                }
+                var params = {'url':url}
+                navigator.push(params,function(e){
+                });
+            },
+            onSelect: function(e) {
+                this.groupListSelect.$set(this.$index, !this.groupListSelect[this.$index]);
+            },
+            getGroupList: function(userId,userName) {
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: "getToDoDoc", //   getSendTask
+                        methodName: "getMyGroup"
+                    },
+                    data: {
+                        userId:userId,
+                        userName:userName
+                    }
+                }
+                return json;
+            },
+            renderData: function () {
+                var self = this
+                var bundleUrl = this.$getConfig().bundleUrl;
+                console.log("bundleUrl:"+bundleUrl);
+                  var json = self.getGroupList(self.userId,self.userName);
+                console.log('get json:', json);
+                service.fetch(json, function(res) {
+                    try {   
+                        console.log('-------res',res);
+                        
+                        // var results = res.data || {}
+                        // console.log("text:"+JSON.stringify(res));
+                        // console.log("results:"+JSON.stringify(results));
+                        var groups = res.data.groupList;
+                        console.log('----groups',JSON.stringify(res.data.groupList));
+                        if(groups.length == 0){
+                            self.isNoGroup = true;
+                        }
+                        for(var i = 0; i < groups.length; i++) {
+                            self.groupList.push(groups[i])
+                            self.groupListSelect.push(false);
+                        }
+                        console.log('---groupList',JSON.stringify(self.groupList));
+
+                        } catch(e) {}
+                    })
+                }
+        }
+    }
+</script>

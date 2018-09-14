@@ -1,0 +1,138 @@
+<template>
+    <div class="container" style="height:{{height}}; background-color:#F9F9F9;" data-role={{dataRole}}>
+        <text class="left-text" style="color:{{leftItemColor}};" navi-item-position="left" if={{!leftitemsrc}} onclick= "onclickleftitem">{{leftitemtitle}}</text>
+        <image class="left-image" navi-item-position="left" src={{leftitemsrc}} if={{leftitemsrc}} onclick="onclickleftitem"></image>
+        <text class="back-text" style="color:{{leftItemColor}};" navi-item-position="back" onclick= "onclickleftitem">{{backitemtitle}}</text>
+        <image class="back-image" navi-item-position="back" src={{backitemsrc}} if={{backitemsrc}} onclick="onclickleftitem"></image>
+        <text class="center-text" style="color:{{titleColor}};" navi-item-position="center">{{title}}</text>
+      <div class="row" repeat="button in rightbuttons">
+        <text class="right-text" style="color:{{rightItemColor}};" navi-item-position="rights" if={{!button.rightItemSrc}} onclick = "onclickrightitem">{{button.rightItemTitle}}</text>
+        <image class="right-image" navi-item-position="rights" src={{button.rightItemSrc}} if={{button.rightItemSrc}} onclick="onclickrightitem"></image>
+      </div>
+    </div>
+</template>
+
+<style>
+    .container {
+        flex-direction: row; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        width: 750;
+    }
+    .row{     
+        left:590;
+        flex-direction: row;
+        justify-content: flex-end; 
+        align-items:flex-end
+    }
+    .right-text {
+        position: absolute; 
+        bottom: 28; 
+        right: 32; 
+        text-align: right;
+        font-size: 32; 
+        font-family: 'Open Sans', sans-serif;
+    }
+    .left-text {
+        position: absolute; 
+        bottom: 28; 
+        left :32; 
+        text-align :left;  
+        font-size: 32; 
+        font-family: 'Open Sans', sans-serif;
+    }    
+    .back-text {
+        position: absolute; 
+        bottom: 26; 
+        left :72; 
+        text-align :left;  
+        font-size: 32; 
+        font-family: 'Open Sans', sans-serif;
+    }
+    .center-text {
+        position: absolute; 
+        bottom: 25; 
+        left: 172; 
+        right: 172;
+        text-align: center; 
+        font-size: 36; 
+        font-weight: bold;
+    }
+    .left-image {
+        position: absolute; 
+        bottom: 20; 
+        left: 28; 
+        width: 50; 
+        height: 50;
+    }
+    .back-image {
+        position: absolute; 
+        bottom: 20; 
+        left: 28; 
+        width: 50; 
+        height: 50;
+    }
+    .right-image {
+        margin-bottom: 20; 
+        margin-right: 26; 
+        width: 50; 
+        height: 50;
+    }
+</style>
+
+<script>
+    module.exports = {
+        data: {
+          dataRole: 'navbar',
+
+          //导航条背景色
+        //   backgroundColor: 'black',
+
+          //导航条高度
+          height: 88,
+
+          //导航条标题 
+          title: "",
+
+          //导航条标题颜色
+          titleColor: 'white',
+
+          //右侧按钮图片
+          rightItemSrc: '',
+
+          //右侧按钮标题
+          rightItemTitle: '',
+
+          //右侧按钮标题颜色
+          rightItemColor: 'white',
+
+          //左侧按钮图片
+          leftitemsrc: '',
+
+          //左侧按钮标题
+          leftitemtitle: '',
+
+          //返回按钮图片
+          backitemsrc: '',
+
+          //返回按钮标题
+          backitemtitle: '',
+
+          //左侧按钮颜色
+          leftItemColor: 'white',
+          
+          rightbuttons:[],
+        },
+        methods: {
+          onclickrightitem: function (e) {
+            this.$dispatch('naviBar.rightItem.click', {index:this.$index});
+          },
+          onclickleftitem: function (e) {
+            this.$dispatch('naviBar.leftItem.click', {});
+            console.log('naviBar.leftItem.click');
+          }
+        }
+    }
+</script>

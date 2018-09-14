@@ -1,0 +1,359 @@
+<element name="content-row">
+    <template>
+        <div class="cellStyle">
+            <text style="font-size:25;color:#6b6969;flex:1">{{title}}</text>
+            <div class="valueArea">
+                <text style="font-size:25; ">{{value}}</text>
+            </div> 
+        </div>
+    </template>
+    <style>
+        .cellStyle{
+            flex-direction:row;
+            padding-left:30;
+            padding-right:30;
+            padding-top:5;
+            padding-bottom:5;
+            align-items:center;
+            justify-content:center;
+            background-color:white;
+        }
+        .valueArea{
+            flex:4;
+            margin-left:30
+        }
+    </style>
+    <script>
+        module.exports = {
+            data: {
+                title: null,
+                value: null
+            }
+        }
+    </script>   
+</element>
+<!--领导批示列表模板-->
+<element name="opinion-list">
+    <template>
+        <div repeat="{{citem in list}}">
+        <div class="opinionArea">
+            <div class="opinionMode" style="margin-bottom:{{$index == list.length-1?0:40}}">
+                <div class="titleArea">
+                    <div class="modelLeft">
+                        <image style="width:70;height:70;" src="{{titleIcon}}"></image>
+                    </div>
+                    <text class="modelRight" style=";font-size:32; color:rgb(70,70,70)">{{citem.content}}</text>
+                </div> 
+                <div class="dateArea">
+                    <text class="modelLeft"></text>
+                    <div class="modelRight">
+                        <text style="font-size:25;color:#6b6969;">{{citem.userName}}</text>
+                        <text style="color:#6b6969;font-size:25;">{{citem.signTime}}</text>
+                    </div>
+                </div>
+                <!--附件列表-->
+                <div class="enclosureArea" repeat="{{item in citem.attachmentList}}" onclick="openEnclosure(item.url)">
+                    <text class="modelLeft"></text>
+                    <div class="modelRight titleBar" style="height:60;background-color:#F0EFF5;margin-right:10;padding-left:10;">
+                        <image style="width:30;height:30;" src="local://enclosure_icon.png"></image>
+                        <text style="flex:1;font-size:22;margin-left:10;margin-right:10;">{{item.name}}</text>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </template>
+    <style>
+        .opinionArea{
+            background-color:#F0EFF5;
+            padding-left:30;
+            padding-right:30;
+        }
+        .opinionMode{
+            background-color:white;
+            padding-right:20;
+            padding-bottom:40;
+            border-width: 1;
+            border-color: rgb(220,220,220);
+        }
+        .titleArea{
+            flex-direction:row;
+            padding-top:20;
+            margin-bottom: 20;
+        }
+        .dateArea{
+            flex-direction:row;
+        }
+        .enclosureArea{
+            flex-direction:row;
+            margin-top:10
+        }
+        .modelLeft{
+            flex:1;
+            align-items: center; 
+            padding-bottom:20;
+        }
+        .modelRight{
+            flex:5;
+            flex-direction:row;
+            justify-content:space-between;
+            margin-right:10;
+        }
+        .titleBar{
+            height:100;
+            align-items: center; 
+            justify-content: flex-start;
+            flex-direction:row;  
+            padding-left:20;
+            border-bottom-style:solid;
+            border-bottom-width:1px;
+            border-bottom-color:#f8f8f8;
+        }
+    }
+    </style>
+    <script>
+        var navigator = require('@weex-module/navigator');
+        // var getBaseURL = require('../include/base-url.js').getBaseURL;
+        module.exports = {
+            data: {
+                //列表数据
+                list:[],
+                //图标
+                titleIcon:null,
+                //用于拼接页面地址，由子标签传递
+                baseurl: '',
+            },
+            methods: {
+                //附件点击事件
+                openEnclosure: function(eurl) {
+                    var vm = this;
+                    var url = this.baseurl;
+                    if (typeof window !== 'object') {
+                        url = url + 'todo-doc/enclosure.js?url=' + encodeURIComponent(eurl);
+                        console.log('----enclosure',url);
+                    }
+                    var params = {'url':url}
+                    //跳转至附件展示页面
+                    navigator.push(params,function(e){
+                    });
+                },
+            }
+        }
+    </script>   
+</element>
+
+<template>
+    <div repeat="{{item in detailData}}" style="background-color:#F0EFF5">
+        
+    
+        <div class="titleBar" onclick="onHeadClick">
+            <image style="width:65;height:65;" src="{{titleIcon}}" resize="contain"></image>
+            <text style="font-size:30;margin-left:30;flex:10;margin-right:20;color:rgb(50,50,50); lines:3">{{item.title}}</text>
+            <div style="flex:1">
+               <image style="width:20;height:20;" src={{iconSrc}}></image> 
+            </div> 
+        </div>
+        <div if="{{contentDisplay}}" style="background-color:white;padding-top:10;padding-bottom:10">
+            <content-row title="文件编号" value="{{item.fileID}}"></content-row>
+            <content-row title="密级" value="{{item.security}}"></content-row>
+            <content-row title="公文类别" value="{{item.fileType}}"></content-row>
+            <content-row title="公文文种" value="{{item.fileClass}}"></content-row>
+            <content-row title="来文单位" value="{{item.department}}"></content-row>
+            <content-row title="来文日期" value="{{item.inDate}}"></content-row>
+            <content-row title="拟办批办" value="{{item.planDo}}"></content-row>
+            <content-row title="填写者" value="{{item.createUser}}"></content-row>
+            <content-row title="填写时间" value="{{item.createDate}}"></content-row>
+            <content-row title="待处理人员" value="{{item.oprator}}"></content-row>
+
+        </div>
+        <div class="titleBar" style="height:60;background-color:#F0EFF5;">
+            <text class="titleText">内容附件</text>
+        </div>
+        <div style="padding-bottom:0">
+            <div repeat="{{item in item.attachmentList}}" onclick="openEnclosure(item.url)">
+                <div class="titleBar" style="height:60;border-bottom-width:1">
+                    <image style="width:30;height:30;" src="local://enclosure_icon.png"></image>
+                    <text style="flex:1;lines:1;font-size:26;margin-left:10;margin-right:10;color:rgb(70,70,70)">{{item.name}}</text>
+                </div>
+            </div>
+            <div class="titleBar" style="height:60;border-bottom-width:0" if="item.attachmentList.length == 0?true:false">
+                <text style="font-size:26; color:rgb(70,70,70)">无附件</text>
+            </div>
+        </div>
+        
+        <div class="titleBar" style="height:60;background-color:#F0EFF5;border-bottom-width:0" if = "{{leaderDisplay}}">
+            <text class="titleText">领导批示</text>
+        </div>
+        <opinion-list list="{{item.leaderPostilList}}" title-icon="{{titleIcon1}}" baseurl="{{baseURL}}"></opinion-list>      
+
+        <div class="titleBar" style="height:60;background-color:#F0EFF5;border-bottom-width:0" if="{{deparDisplay}}">
+            <text class="titleText">部门意见</text>
+        </div>
+        <opinion-list list="{{item.deptAdviceList}}" title-icon="{{titleIcon2}}" baseurl="{{baseURL}}"></opinion-list>
+        
+        <div class="titleBar" style="height:60;background-color:#F0EFF5;border-bottom-width:0" if="{{handleDisplay}}">
+            <text class="titleText">处理反馈</text>
+        </div>
+        <opinion-list list="{{item.disposeBackList}}" title-icon="{{titleIcon3}}" baseurl="{{baseURL}}"></opinion-list>
+        
+        <div style="height:40;background-color:#F0EFF5"></div>
+        <div class="clickItemArea" style="height:80" onclick="handleProcess">
+           <text style="font-size:26; color:rgb(70,70,70)">处理流程</text> 
+           <image style="width:20;height:20" src="local://right_icon.png"></image>
+        </div>
+
+        </div>
+</template>
+
+<style>
+
+    .clickItemArea{
+        height:60;
+        flex-direction:row;
+        align-items:center;
+        justify-content:space-between;
+        background-color:white;
+        padding-left:30;
+        padding-right:30;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-top-width:1px;
+        border-color:rgb(220,220,220);
+    }
+    .titleText{
+        font-size:26;
+        color:rgb(110,110,110);
+    }
+    .titleBar{
+        height:120;
+        align-items: center; 
+        justify-content: flex-start;
+        background-color:white;
+        flex-direction:row;  
+        padding-left:30;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-bottom-color:rgb(220,220,220);
+    }
+</style>
+
+<script>
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    require('../components/bx-loading.we');
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var tools = require('../include/tools.js').methods;
+    var service = require('@weex-module/service') || {};
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            title: '详细',
+            navBarHeight: 88,
+            iconSrc: null,
+            downIconSrc: 'local://downloadicon.png',
+            upIconSrc: 'local://upicon.png',
+            contentDisplay: false,
+            detailData: [],
+            // detailData: null,
+            status: 0,
+            //控制领导批示，部门意见和处理反馈模块的显示和隐藏
+            leaderDisplay: true,
+            deparDisplay: true,
+            handleDisplay: true,
+            docId: '',
+            loading: true,
+            dir: 'official_doc',
+            baseURL: '',
+            //领导批示，部门意见和处理反馈模块使用图标
+            titleIcon1: 'local://leader_instruction.png',
+            titleIcon2: 'local://depart_opinion.png',
+            titleIcon3: 'local://handle_feedback.png',
+
+            bottomDisplay:true,
+            titleIcon:'',
+
+        },
+        created: function() {
+            //iOS配置
+            tools.setNavBarHeight(this);
+            //数据加载
+            // this.renderData();
+            //获取baseURL
+            this.baseURL = getBaseURL(this);
+
+            //控制页面是否展开
+            if(this.status == 0){
+                this.iconSrc = this.downIconSrc;
+                this.contentDisplay = false;                   
+            }else{
+                this.iconSrc = this.upIconSrc;
+                this.contentDisplay = true;  
+            }
+
+
+            //数据绑定， 父控件传数据
+            var self = this;
+            this.$on('detailData', function(e){
+                var content = e.detail.content;
+                self.detailData.push(content);
+
+                self.docId = e.detail.docId;
+                self.titleIcon = e.detail.titleIcon;
+
+                var docType = e.detail.docType;
+                if (docType == "getToDoDoc") {
+                    self.bottomDisplay = true;
+                }else{
+                    self.bottomDisplay = false;
+                }
+
+                if(content.leaderPostilList == null || content.leaderPostilList.length == 0){
+                    self.leaderDisplay = false;
+                }
+                if(content.deptAdviceList == null || content.deptAdviceList.length == 0){
+                    self.deparDisplay = false;
+                }
+                if(content.disposeBackList == null || content.disposeBackList.length == 0){
+                    self.handleDisplay = false;
+                } 
+
+                self.btnDisabled = e.detail.btnDisabled;
+                // console.log('-----btnDisabled',self.btnDisabled);
+            }.bind(this));
+
+
+        },
+        methods: {
+            //处理流程点击事件
+            handleProcess: function(e) {
+                tools.push(navigator,this.baseURL,'todo-doc/process.js?docId='+this.docId);
+            },
+            //附件点击事件
+            openEnclosure: function(eurl) {
+                var vm = this;
+                var url = this.baseURL;
+                if (typeof window !== 'object') {
+                    url = this.baseURL + 'todo-doc/enclosure.js?url=' + encodeURIComponent(eurl);
+                    console.log('----url',url);
+                }
+                var params = {'url':url}
+                console.log('push url', url);
+                navigator.push(params,function(e){
+                });
+            },
+            //控制页面展开事件
+            onHeadClick: function(e) {
+                if(this.status == 0){
+                    this.iconSrc = this.upIconSrc;
+                    this.contentDisplay = true; 
+                    this.status = 1; 
+                }else{
+                    this.iconSrc = this.downIconSrc;
+                    this.contentDisplay = false;
+                    this.status = 0;
+                }
+            },
+        }
+    }
+</script>

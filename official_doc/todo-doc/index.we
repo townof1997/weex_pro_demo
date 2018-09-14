@@ -1,0 +1,98 @@
+<style>
+  .content {
+    color: #353535;
+    background-color: #666;
+  }
+  .tabbar {
+    background-color: #fff;
+  }
+</style>
+
+<template>
+  <div>
+    <!-- <wxc-navbar></wxc-navbar> -->
+    <wxc-tabbar class="tabbar" selected-index="{{index}}" tab-items={{tabItems}} unselected-color={{unselectColor}} selected-color={{selectColor}}></wxc-tabbar>
+  </div>
+</template>
+
+<script>
+  require('weex-components');
+  var getBaseURL = require('../include/base-url.js').getBaseURL;
+  var getIntParameterByName = require('../include/tools.js').methods.getIntParameterByName;
+  module.exports = {
+    data: {
+      dir: 'official_doc',
+      //未选中为灰色
+      unselectColor: "#6b6969",
+      //选中颜色为蓝色
+      selectColor:"#29a1f7",
+      index: 0,
+      tabItems: [
+        {
+          index: 0,
+          title: "待办公文",
+          titleColor: 0x0,
+          icon: "",
+          image: "local://nav_todo_doc_normal.png",
+          selectedImage: "local://nav_todo_doc_blue.png",
+          src: "todo-doc/to-do-list.js",
+          visibility: "visible",
+        },
+        {
+          index: 1,
+          title: "我的公文",
+          titleColor: 0x0,
+          icon:"",
+          image: "local://nav_my_doc_normal.png",
+          selectedImage: "local://nav_my_doc_blue.png",
+          src: "my-doc/my-doc.js",
+          visibility: "hidden",
+        },
+        {
+          index: 2,
+          title: "在办公文",
+          titleColor: 0x0,
+          icon:"",
+          image: "local://nav_doing_doc_normal.png",
+          selectedImage: "local://nav_doing_doc_blue.png",
+          src: "doing-doc/doing-doc.js",
+          visibility: "hidden",
+        },
+        {
+            index: 3,
+            title: "办结公文",
+            titleColor: 0x0,
+            icon:"",
+            image: "local://nav_done_doc_normal.png",
+            selectedImage: "local://nav_done_doc_blue.png",
+            src: "done-doc/done-doc.js",
+            visibility: "hidden",
+        }
+      ],
+    },
+    created: function () {
+
+      var base = getBaseURL(this);
+      var self = this;
+      var bundleUrl = this.$getConfig().bundleUrl;
+      // self.index = getIntParameterByName("index",bundleUrl);
+      var index = getIntParameterByName("index",bundleUrl);
+      // console.log('-----index',index);
+      self.index = index;
+      
+      for(var i = 0; i < this.tabItems.length; i++) {
+          var tabItem = this.tabItems[i];
+          tabItem.src = base + tabItem.src;
+      }
+    },
+    methods: {
+      ready: function (e) {
+        var self = this;
+        self.$on('tabBar.onClick',function(e){
+          var detail= e.detail;
+          nativeLog('tabBar.onClick ' + detail.index);
+        });
+      },
+    }
+  }
+</script>

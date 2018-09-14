@@ -1,0 +1,234 @@
+<template>    
+   <div onviewappear="{{viewappear}}">
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="待办" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+        <scroller style="margin-top:{{navBarHeight}};margin-bottom:120;background-color:#F0EFF5">
+
+            <bx-detail id = "bx-detail"></bx-detail>
+        </scroller>
+
+        <div class="operateArea" style="background-color:{{bottomAreabg}};">
+            <div style="flex-direction:row;justify-content:center;align-items:center;">
+                <div style="align-items:center;justify-content:center;" repeat="{{item in oprateList}}" onclick="clickHandle(item.oprateCode)" disabled="{{btnDisabled[$index]}}">
+                    <div class="clickBtn" style="margin-right:{{$index == oprateList.length - 1?0:40}}">
+                        <text style="font-size:30;color:white">{{item.oprateName}}</text> 
+                    </div>
+                </div>  
+            </div>
+        </div>
+
+        <bx-loading if={{loading}} ></bx-loading>
+ 	</div>
+</template>
+
+<style>
+    .operateArea{
+        position: absolute; 
+        left:0;
+        right:0;
+        bottom:0;
+        
+        height:120;
+        justify-content:center;
+    } 
+    .clickBtn{
+        padding-left:30;
+        padding-right:30;
+        height:60;
+        align-items:center;
+        justify-content:center;
+        background-color: #3CB0FC;
+        border-radius:5;
+    }
+</style>
+
+<script>
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    require('../components/bx-loading.we');
+    require('../components/bx-detail.we');
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var tools = require('../include/tools.js').methods;
+    var service = require('@weex-module/service') || {};
+    var storage = require('@weex-module/storage');
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            title: '详细',
+            navBarHeight: 88,
+            loading: true,
+            dir: 'official_doc',
+            baseURL: '',
+            docType:'getToDoDoc',
+            oprateList:[],
+            //控制按钮是否获得焦点
+            btnDisabled:[],
+            //详细数据
+            content: null,
+            userName: '',
+            userId: '',
+            bottomAreabg: '#F0EFF5'
+        },
+        created: function() {
+            var self = this;
+
+            //iOS配置
+            tools.setNavBarHeight(this);
+            /*获取用户信息*/
+            weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+        
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+
+                //数据加载
+                self.renderData();
+
+            });
+
+            //获取baseURL
+            this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+
+                })
+            });
+        },
+        methods: {
+            submitFlow: function(docId,nextStep,advice,choosePeopleList,chooseGroupList,curUsername,curUserId) {
+	            var json = {
+		            attr: {
+		                projectName: "1800OAProject",
+		                serviceName: "submitDocBNA", //   getSendTask
+		                methodName: "submitFlow"
+		            },
+		            data: {
+		                docId: docId,
+                        nextStep: nextStep,
+                        advice: advice,
+                        choosePeopleList: choosePeopleList,
+                        chooseGroupList: chooseGroupList,
+                        curUsername: curUsername,
+                        curUserId: curUserId
+                    }
+                }
+                return json;
+            },
+            //文件签收，批注，提交和完成操作
+            clickHandle: function(oprateCode) {
+                var self = this;
+                self.btnDisabled.$set(this.$index, true);
+                var docId = self.content.documentKey;
+                var nextStep = '';
+                var advice = '';
+                var choosePeopleList = '';
+                var chooseGroupList = '';
+                if(oprateCode == 'QS'){
+                    nextStep = 'QS';
+                    // advice = '签收意见';
+                    var json = self.submitFlow(docId,nextStep,advice,choosePeopleList,chooseGroupList,self.userName,self.userId);
+                    service.fetch(json, function(res) {
+                        try {
+                            console.log('---submitFlow',res);
+                            tools.pop(navigator);
+                        } catch(e) {}
+                    })
+                }else if(oprateCode == 'PZ'){
+                    nextStep = 'PZ';
+                    // advice = '批注意见';
+                    tools.push(navigator,this.baseURL,'todo-doc/annotation.js?docId='+docId+'&nextStep='+oprateCode);
+                }else if(oprateCode == 'TJ'){
+                    nextStep = 'TJ';
+                    // advice = '提交意见';
+                    tools.push(navigator,this.baseURL,'todo-doc/submit.js?docId='+docId+'&nextStep='+oprateCode);
+                    
+                }else if(oprateCode == 'WC'){
+                    nextStep = 'WC';
+                    // advice = '完成意见';
+                    var json = self.submitFlow(docId,nextStep,advice,choosePeopleList,chooseGroupList,self.userName,self.userId);
+                    service.fetch(json, function(res) {
+                        try {
+                            console.log('---submitFlow',res);
+                            tools.pop(navigator);
+                            //控制刷新列表页面
+                            storage.setItem('refreshList', '1', function(e) {
+                            });
+                        } catch(e) {}
+                    })
+                }
+                self.btnDisabled.$set(this.$index, false);
+            },
+            getTaskDetailInfo: function(userId,userName,docId) {
+                var self = this;
+	            var json = {
+		            attr: {
+		                projectName: "1800OAProject",
+		                serviceName: self.docType, //   getSendTask
+		                methodName: "getTaskDetailInfo"
+		            },
+		            data: {
+		                userId: userId,
+		                userName: userName,
+		                docId: docId
+                    }
+                }
+                return json;
+            },
+            renderData: function () {
+                var self = this;
+                //隐藏底部按钮区域
+                self.bottomAreabg = '#F0EFF5';
+                var bundleUrl = this.$getConfig().bundleUrl;
+                var docId = tools.getParameterByName("docId",bundleUrl);
+                // console.log("docId:"+self.docId);
+                var json = self.getTaskDetailInfo(self.userId,self.userName, docId);   
+                service.fetch(json, function(res) {
+                    try {
+                        //关闭加载动画
+                        self.loading = false;
+                        //显示底部按钮区域
+                        self.bottomAreabg = 'white';
+                        console.log('getDetail:', res);
+
+                        self.content = res.data.doc;
+
+                        self.oprateList = self.content.oprateList;
+                        console.log('---oprateList:',self.oprateList);
+                        for(var i = 0; i < self.content.oprateList.length; i++){
+                            self.btnDisabled.push(false);
+                        }
+
+                        //给bx-detail子空间传输数据
+                        self.$vm('bx-detail').$emit(
+                            'detailData',
+                            {   
+                                'content':  self.content, //请求的数据
+                                'docType':  self.docType, //文档类型
+                                'docId':    docId,  //文档ID
+                                'titleIcon': 'local://todo_list_icon.png',  //标题头左侧 icon
+                            }
+                        ); 
+                    } catch(e) {}
+                })
+            },
+            viewappear:function(){
+                //连续返回
+                storage.getItem('backTwice', function(e) {
+                    var result = e.result;                  
+                    if (result === 'success' && e.data == '1') {
+                        tools.pop(navigator);
+                    }                     
+                    
+                });
+                console.log("1-1-1-1-1");
+                storage.removeItem('person-list', function (e) {
+                })
+            }
+        }
+    }
+</script>

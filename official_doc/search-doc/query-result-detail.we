@@ -1,0 +1,100 @@
+<template>    
+   <div>
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+        <scroller style="margin-top:{{navBarHeight}}">
+
+            <bx-detail  id = "bx-detail"></bx-detail>
+        </scroller>
+        <bx-loading if={{loading}} ></bx-loading>
+    </div>
+</template>
+
+<style>
+
+</style>
+
+<script>
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    require('../components/bx-loading.we');
+    require('../components/bx-detail.we');
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var tools = require('../include/tools.js').methods;
+    var service = require('@weex-module/service') || {};
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            title: '详细',
+            navBarHeight: 88,
+            loading: true,
+            dir: 'official_doc',
+            baseURL: '',
+            docType: 'getDoingDoc', //文件类型
+        },
+        created: function() {
+            //iOS配置
+            tools.setNavBarHeight(this);
+            //数据加载
+            this.renderData();
+            //获取baseURL
+            this.baseURL = getBaseURL(this);
+
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+
+                })
+            });
+        },
+        methods: {
+            getTaskDetailInfo: function(userId,userName,docId) {
+                var self = this;
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: self.docType, //   getSendTask
+                        methodName: "getTaskDetailInfo"
+                    },
+                    data: {
+                        userId: userId,
+                        userName: userName,
+                        docId: docId
+                    }
+                }
+                return json;
+            },
+            renderData: function () {
+                var self = this
+                var bundleUrl = this.$getConfig().bundleUrl;
+                var  docId = tools.getParameterByName("docId",bundleUrl);
+                // console.log("docId:"+self.docId);
+                var json = self.getTaskDetailInfo("045089","罗文钦", docId);   
+                service.fetch(json, function(res) {
+                    try {
+                        //关闭加载动画
+                        self.loading = false;
+                        console.log('getDetail:', res);
+
+                        var content = res.data.doc; 
+
+                        self.$vm('bx-detail').$emit(
+                            'detailData',
+                            {   
+                                'content':  content,
+                                'docType':  self.docType,
+                                'docId':    docId,
+                                'titleIcon': 'local://todo_list_icon.png'
+                            }
+                        );
+
+                    } catch(e) {}
+                })
+            },
+        }
+    }
+</script>

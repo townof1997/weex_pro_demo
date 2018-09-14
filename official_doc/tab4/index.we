@@ -1,0 +1,123 @@
+<template>
+    <div class = "wrapper" style = "background-color: #F0EFF5">
+     <bx-navbar height={{navBarHeight}}
+        background-color="#3CB0FC";
+        title={{title}}
+        title-color="white"></bx-navbar>
+        <!--头部
+        @param:
+            headerimg：头像地址
+            user-name：用户名称
+            navbarMargin:navbar高度
+        -->
+        <!-- <mine-header headerimg = "{{ headerimg }}" user-name =  {{userName}} navbar-margin = {{navBarHeight}}></mine-header>
+        <mine-body class="body" itemlist = "{{ list }}"></mine-body><!--主体列表-->
+        <!-- <mine-bottom></mine-bottom> --><!--底部-->
+        <div style = "margin-top:{{navBarHeight}}" class = "wrapper">
+
+          <div style = "background-color:white; margin-left:40; margin-right:40; margin-top:80">
+
+            <div style = "height: 30"></div>
+
+            <div style = "height: 60; flex-direction:row; align-items:center; justify-content:center;justify-content:space-between">
+                <text style = "font-size:34; margin-left:60; flex:5">姓名:</text>
+                <text style = "font-size:30; flex:3">{{userName}}</text>
+            </div>
+
+            <div style = "height: 30"></div>
+
+            <div style = "height: 60; flex-direction:row; align-items:center; justify-content:center; margin-bottom:20">
+                <text style = "font-size:34; margin-left:60; flex:5">工号:</text>
+                <text style = "font-size:30; flex:3">{{userId}}</text>
+            </div>
+
+            <div style = "height: 30"></div>
+
+            <div style = "height: 60; flex-direction:row; align-items:center; justify-content:center; margin-bottom:20">
+                <text style = "font-size:34; margin-left:60; flex:5">当前版本号:</text>
+                <text style = "font-size:30; flex:3">1.0</text>
+            </div>
+
+          </div>
+          
+
+          <div style = "position:absolute; left:80; right:80; bottom:100; height:26; flex-direction: row; align-items:center; justify-content:center">
+              <div style = "flex:1; height:1; background-color:rgb(200,200,200); margin-right:10"></div>
+              <div style = "flex:8">
+                <text style = "font-size:26; text-align:right">宝钢新日铁汽车板有限公司 ©版权所有</text>
+              </div>
+              <div style = "flex:1; height:1; background-color:rgb(200,200,200); margin-left:10"></div>
+          </div>
+        </div>
+        
+    </div>
+</template>
+
+<style>
+	.wrapper {
+  		position: absolute;
+  		top: 0;
+  		left: 0;
+  		right: 0;
+  		bottom: 0;
+  		width: 750;
+  	}
+
+    .navbar {
+
+    }
+
+    .body{
+      flex:1;
+    }
+
+    .input {  
+        font-size: 28;  
+        background-color: red
+        height: 82;  
+        width:350;     
+    }
+</style>
+
+<script>
+    require('../components/bx-navbar.we');
+var storage = require('@weex-module/storage');
+     module.exports = {
+         data: {
+            navBarHeight: 88,
+            title: '我的',
+            headerimg:'local://todo.jpg',
+            userName:'吉尔伽美什',
+            userId:'',
+            heightD:0,
+            list:[
+              { img: 'local://doing.jpg' ,text: '在办公文'},
+              { img: 'local://done.jpg'  ,text: '办结公文'},
+              { img: 'local://search.jpg',text: '文件查询'},
+              { img: 'local://mine.jpg'  ,text: '我的公文'},
+            ]
+         },
+
+         created :function(){
+           this.$getConfig(function (config) {
+             var env = config.env;
+             if(env.platform == 'iOS'){
+               var scale = env.scale;
+               var deviceWidth = env.deviceWidth / scale;
+               this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+             }
+             this.heightD = env.deviceHeight;
+           }.bind(this));
+
+           //获取用户信息
+            var self = this;
+            storage.getItem('user_info' ,function(info){
+              var userinfo = JSON.parse(info.data);
+              console.log('获取存储的用户信息', userinfo);
+              self.userName = userinfo.attr.parameter_username;
+              self.userId = userinfo.attr.parameter_userid;
+            });
+         }
+     }
+
+</script>

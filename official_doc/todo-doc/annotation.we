@@ -1,0 +1,182 @@
+<template>
+<div style="background-color:#F0EFF5;">
+    <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8" title={{title}} title-color="white"></bx-navbar>
+        <scroller>
+            <div class="titleBar" style="height:80;background-color:#F0EFF5;margin-top:90;" >
+                <text class="titleText"></text>
+            </div>
+            <div style="border-top-color:#bbbbbb;border-top-width:1px;border-bottom-color:#bbbbbb;border-bottom-width:1px;border-left-width:1px;border-left-color:#bbbbbb;border-right-width:1px;border-right-color:#bbbbbb;background-color:white">
+                <textarea placeholder="请输入意见" class="input" oninput="getAdvice"></textarea>
+            </div>
+            <div style="flex-direction: row;margin-top:40;justify-content: space-between;" onclick="submit" disabled="{{isDisabled}}">
+                <text class="button" value="提交" type="primary"></text>
+            </div>
+        </scroller>
+</div> 
+  
+</template>
+
+<style>
+    .wrapper { 
+        width: 750;
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        bottom: 0;
+        align-items: center;
+        justify-content: center;
+    }
+    .text {
+        font-size:32;
+        font-family: "Open Sans", sans-serif;
+    }
+    .titleBar{
+        height:100;
+        align-items: center; 
+        justify-content: flex-start;
+        flex-direction:row;  
+        padding-left:20;
+
+		}
+    .titleText{
+        font-size:22;
+        color:#bbbbbb;
+		}
+    .input {
+        height: 200px;
+        width: 690px;
+        placeholder-color:#bbbbbb;
+        font-size:35;
+        color:black;
+        margin-left:20;
+        margin-top:20;
+        }
+        .button {
+        height:80;
+        border-radius:10;
+        font-size: 36;
+        width: 650;
+        color: white;
+        text-align: center;
+        padding-top: 10;
+        padding-bottom: 10;
+        border-width: 2;
+        border-style: solid;
+        margin-left:50;
+        border-color: rgb(162, 217, 192);
+        background-color: #3CB0FC;
+        line-height:55;
+        }
+</style>
+
+<script>
+   require('weex-components');
+   require('../components/bx-navbar.we');
+   var navigator = require('@weex-module/navigator');
+   var getBaseURL = require('../include/base-url.js').getBaseURL
+   var service = require('@weex-module/service') || {}
+   var storage = require('@weex-module/storage');
+   var modal = require('@weex-module/modal') || {};
+   var tools = require('../include/tools.js').methods;
+    module.exports = {
+        data: {
+            color: '#ff0000',
+            text: '待办公文',
+            title: '批注',
+            navBarHeight: 88,
+            docId: '',
+            personStr:'',
+            dir: 'official_doc',
+            isDisabled: false,
+            userName: '',
+            userId: '',
+            advice:''
+        },
+
+        created: function() {
+            var self = this;
+            /*获取用户信息*/
+            weex.requireModule('user').getUserInfo(function(info){
+                console.log('获取登陆信息并存储' ,info);
+                self.userName = info.attr.parameter_username;
+                self.userId = info.attr.parameter_userid;
+            });
+          this.$getConfig(function (config) {
+            var env = config.env;
+            if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+            }
+          }.bind(this));
+          this.baseURL = getBaseURL(this);
+
+            //注册返回按钮点击事件
+            this.$on('naviBar.leftItem.click', function(event) {
+            // When a notify comes, this handler will be run.
+            // `event.detail` will be `{a: 1}`
+                var params = {
+                    animated: 'true'
+                }
+                navigator.pop(params, function () {
+                })
+            }) 
+        },
+        methods: {
+                //获取意见
+                getAdvice:function(event){
+                    var self = this;
+                    self.advice = event.value;
+                },
+                //获取提交接口json格式参数
+                submitFlow: function(docId,nextStep,advice,choosePeopleList,chooseGroupList,curUsername,curUserId) {
+                var json = {
+                    attr: {
+                        projectName: "1800OAProject",
+                        serviceName: "submitDocBNA", //   getSendTask
+                        methodName: "submitFlow"
+                    },
+                    data: {
+                        docId: docId,
+                        nextStep: nextStep,
+                        advice: advice,
+                        choosePeopleList: choosePeopleList,
+                        chooseGroupList: chooseGroupList,
+                        curUsername: curUsername,
+                        curUserId: curUserId
+                    }
+                }
+                return json;
+                },
+                //提交按钮点击事件
+                submit: function(){
+                    var self = this;
+                    self.isDisabled = true;
+                    var bundleUrl = self.$getConfig().bundleUrl;
+                    var getParameterByName = tools.getParameterByName;
+                    //获取跳转传递的参数
+                    var docId = getParameterByName("docId",bundleUrl);
+                    console.log("---11--"+docId);
+                    var nextStep = getParameterByName("nextStep",bundleUrl);
+                    var chooseGroupList = '';
+                    var choosePeopleList = '';
+                    var advice = self.advice;
+                    var json = self.submitFlow(docId,nextStep,advice,choosePeopleList,chooseGroupList,self.userName,self.userId);
+                    service.fetch(json, function(res) {
+                    try {
+                            console.log('---submitFlow',res);
+                            tools.pop(navigator);
+                            //控制连续两次返回
+                            storage.setItem('backTwice', '1', function(e) {
+                            });
+                            self.isDisabled = false;
+                            modal.toast({ 'message': '提交成功',  'duration': 2});
+                            } catch(e) {}
+                        })
+
+            },
+
+        }
+    }
+</script>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.example.myapp" version="1.0.0">
+    <name>Hello</name>
+    <preference name="loglevel" value="DEBUG" />
+    <preference name="launch_locally" value="false" />
+    <preference name="launch_url" value="http://192.168.1.107:12580/official_doc/build/index.js"/>
+    <preference name="local_url" value="file://assets/index.js" />
+
+</widget>
+<!--//10.25.67.54周洁-->

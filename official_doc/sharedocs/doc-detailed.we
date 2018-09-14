@@ -1,0 +1,106 @@
+<template>
+    <div>
+        <wxc-navpage data-role="none" height={{navBarHeight}} background-color="#F9F9F9" title={{title}} title-color="#3A3A3A" left-item-src="local://back.png">
+            
+        </wxc-navpage>
+        <div class="information">
+            <list class="leftlist">
+               <cell onclick="oncellclick" repeat="{{todoItem in items}}">
+                <div class="text-list">
+                    <text class="text-det">{{todoItem.text}}</text>
+                </div>
+               </cell>
+            </list>
+            <div class="detailed-text">
+                <text>关键质量</text>
+                <text>设备稳定</text>
+                <text>智慧制造</text>
+                <text>用户技术</text>
+            </div>
+
+        
+        </div>
+
+
+        
+    </div>
+
+</template>
+<style>
+    .information{
+        flex-direction:row;
+    }
+    .leftlist{
+        width:110;
+        background-color:#F7F7F7;
+    }
+    .text-list{
+      padding-left:25;
+      height:60;
+    }
+    .text-det{
+      font-size:35;
+      text-align:center;
+      height:60;
+    }
+</style>
+<script>
+    require('weex-components');
+  module.exports = {
+    data: {
+      navBarHeight: 88,
+      title: '分类',
+      dir: 'examples',
+      baseURL: '',
+      items:[
+          {text:'公共信息'},
+          {text:'经典案例'},
+          {text:'专业小组'},
+          {text:'专利周报'},
+          {text:'焦点关注'},
+          {text:'情报论坛'},
+      ],
+    },
+    created: function() {
+      this.$getConfig(function (config) {
+        var env = config.env;
+        if(env.platform == 'iOS'){
+          var scale = env.scale;
+          var deviceWidth = env.deviceWidth / scale;
+          this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+        }
+      }.bind(this));
+      this.$on('naviBar.rightItem.click',function(e){
+        duration = 2;
+        this.$call('modal', 'toast', {
+          'message': 'naviBar.rightItem.click',
+          'duration': duration
+          });
+      });
+      this.$on('naviBar.leftItem.click',function(e){
+        duration = 2;
+        this.$call('modal', 'toast', {
+          'message': 'naviBar.leftItem.click',
+          'duration': duration
+          });
+      });
+    },
+    methods: {
+      push: function() {
+        var vm = this;
+        var params = {
+          'url':  'http://dotwe.org/raw/dist/33dfcbe81979c60ba5de72c235d7d0f8.js',
+          'animated' : 'true',
+        }
+        vm.$call('navigator','push',params, function () {});
+      },
+      pop: function() {
+        var vm = this;
+        var params = {
+          'animated' : 'true',
+        }
+        vm.$call('navigator','pop',params, function () {});
+      }
+    }
+  }
+</script>

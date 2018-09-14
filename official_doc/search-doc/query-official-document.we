@@ -1,0 +1,128 @@
+<template> 
+  <div class="wrapper">
+         <bx-navbar height={{navBarHeight}} backitemsrc="local://back_button.png" backitemtitle="返回" background-color="#1C6BC8"></bx-navbar> 
+         <div class="wrapper" style="margin-top:{{navBarHeight}}">
+         <div class="clickItemArea" repeat="{{item in nextList}}" onclick="clickSwitch" >
+                <text style="font-size:25">{{item.operation}}</text> 
+                <image style="width:20;height:20" src="local://check.png" if="{{item.isDisplay}}"></image>
+        </div>
+        </div>
+  </div>  
+
+</template>  
+
+<script>  
+    require('weex-components');
+    require('../components/bx-navbar.we');
+    var tools = require('../include/tools.js').methods;
+    var navigator = require('@weex-module/navigator');
+    var getBaseURL = require('../include/base-url.js').getBaseURL;
+    var modal = require('@weex-module/modal') || {};
+    var storage = require('@weex-module/storage');
+    module.exports = {  
+       created: function() {
+            this.$getConfig(function (config) {
+                var env = config.env;
+                 tools.setNavBarHeight(this);
+                if(env.platform == 'iOS'){
+                var scale = env.scale;
+                var deviceWidth = env.deviceWidth / scale;
+                this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+                }
+            }.bind(this));
+            this.baseURL = getBaseURL(this);
+            this.$on('naviBar.leftItem.click', function(event) {
+                var params = {
+                  animated: 'true'
+                }
+               
+                storage.setItem('query_official_document',this.selectType, function(e) {
+                });
+                navigator.pop(params, function () {
+                // callback
+                   
+                })
+            });
+            var bundleUrl = this.$getConfig().bundleUrl;
+            this.typeIndex = tools.getParameterByName("selectIndex",bundleUrl);
+            if(this.typeIndex != ''){
+                var item = this.nextList[(this.typeIndex-1)];
+               
+               item.isDisplay = true;
+            }
+
+
+        },
+
+        data:{  
+            typeIndex:'',
+            selectType:'',
+            baseURL: '',
+            navBarHeight: 88,
+            nextList:[
+                {
+                    operation:'行政文件',
+                    index:1,
+                    isDisplay: false
+                },
+                {
+                    operation:'党工团宣',
+                    index:2,
+                    isDisplay: false
+                },
+             
+            ],
+           
+        },  
+        methods:{  
+            clickSwitch: function(e) {
+                for(var i = 0;i < this.nextList.length;i++){
+                    if(this.$index == i){
+                        this.nextList[i].isDisplay = true;
+                        this.selectType = this.nextList[i].operation+' '+this.nextList[i].index;
+                        const Hulk = new BroadcastChannel('query_official_document');
+                        Hulk.postMessage(this.selectType);
+                        this.$dispatch('naviBar.leftItem.click', {});
+                    }else{
+                        this.nextList[i].isDisplay = false;
+                    }
+                }
+               
+
+            },
+            
+      
+        }  
+    }  
+</script>  
+
+
+<style>  
+   .clickItemArea{
+        height:60;
+        flex-direction:row;
+        align-items:center;
+        justify-content:space-between;
+        padding-left:30;
+        padding-right:30;
+        border-bottom-style:solid;
+        border-bottom-width:1px;
+        border-top-width:1px;
+        border-color:#f8f8f8;
+    }
+    .wrapper {  
+        position: absolute;  
+        top: 0;  
+        right: 0;  
+        bottom: 0;  
+        left: 0;  
+    }  
+ 
+   
+ 
+
+    
+   
+   
+  
+</style>  

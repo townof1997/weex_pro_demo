@@ -1,0 +1,174 @@
+
+<template>
+    
+        <!--导航栏高度， 背景颜色-->
+        <div class="mineNav" style="height:{{navBarHeight}}; background-color:{{bcolor}}; justify-content:center">
+            <!--顶部20高度的view，改变ios状态栏的颜色，安卓隐藏-->
+            <div style="height:{{navBarHeight-navHeight}}; background-color:{{bcolor}}" if="{{show}}"> 
+
+            </div>
+            <!--导航栏 内容-->
+            <div style="height:{{navHeight}}; flex-direction:row; justify-content:space-between;align-items: center;" >
+
+                <!--导航栏 左边图片-->
+
+                   <div style="flex:1.1; flex-direction:row; align-items:center" onclick="onclickrightitem"> 
+
+                        <image src="{{leftimage}}" style="height:50; width:50; margin-left:25; margin-bottom:0;" resize="contain" onclick="onclickleftitem"></image>
+                        <text style="color:white;margin-left:-5;" onclick="onclickleftitem">{{lefttitle}}</text>
+
+                    </div>
+                <!--导航栏，中间的切换-->
+                
+                
+                    <div style="flex:4;justify-content:center; flex-direction:row; height: 50; align-items: center; ">
+
+                        <div style = "height:50;width:240;border-color:white;border-width:2px;border-radius:{{radius}};flex-direction:row;align-items:center;" >
+
+                            <text style="padding-top:5;width:120; height:46;background-color:{{leftbgcolor}};color:{{leftcolor}};text-align:center; font-size:32" onclick="todoselect">{{todotitle}}</text>
+
+                            <text style="padding-top:5;width:117; height:46;background-color:{{rightbgcolor}};color:{{rightcolor}};text-align:center;font-size:32" onclick="doneselect">{{donetitle}}</text>
+
+                        </div>
+                        
+                        
+
+                    </div>
+                    
+                
+
+                <!--导航栏 右边的图片设置，默认的右边文字-->
+                <div style="flex:1; flex-direction:row; justify-content: flex-end; align-items:flex-end" onclick="onclickrightitem">
+
+                    <image src="{{rightimage}}" style="height:40; width:50; margin-right:20; margin-bottom:15" if="{{rightimage}}" resize="contain"></image>
+                    <div style="height:40; width:80; margin-right:20; margin-bottom:15;justify-content: flex-end" if="{{righttitle}}">
+                        <text style=" color:{{rightcolor}}; text-align:right" >{{righttitle}}</text>
+                    </div>
+                </div>
+            </div>  
+        </div>
+    
+    
+</template>
+<style>
+
+</style>
+<script>
+    var env='search-nav'
+    module.exports={
+        data:{
+            navBarHeight:88,
+            navHeight:60,
+            baseURL:'',
+            dir: 'official_doc',
+            placeholdertitle:null,
+            leftimage:'',
+            rightimage:null,
+            bcolor:'',
+            righttitle:null,
+            putwidth:0,
+            putcolor:null,
+            show:null,
+            leftcolor:'',
+            leftbgcolor:'',
+            rightcolor:'',
+            rightbgcolor:'',
+            radius:10,
+        },
+
+
+
+        created: function () {
+            this.$getConfig(function (config) {
+                var env = config.env;
+                if(env.platform == 'iOS'){
+                     var scale = env.scale;
+                    var deviceWidth = env.deviceWidth / scale;
+                     this.navBarHeight = 64.0 * 750.0 / deviceWidth;
+                     this.navHeight = 44.0 *750.0 /deviceWidth;
+                     this.show = 'true';
+                }
+
+                if(env.platform == 'Android'){
+                    this.show='false';
+                }
+
+                this.putwidth = 0.72 * deviceWidth;
+            }.bind(this));
+
+            var bundleUrl = this.$getConfig().bundleUrl;
+            bundleUrl = new String(bundleUrl);
+            console.log('hit', bundleUrl);
+            var nativeBase;
+            var isAndroidAssets = bundleUrl.indexOf('your_current_IP') >= 0 || bundleUrl.indexOf('file://assets/')>=0;
+
+            var isiOSAssets = bundleUrl.indexOf('file:///') >= 0 && bundleUrl.indexOf('WeexDemo.app') > 0;
+            if (isAndroidAssets) {
+                nativeBase = 'file://assets/';
+            }
+            else if (isiOSAssets) {
+                // file:///var/mobile/Containers/Bundle/Application/{id}/WeexDemo.app/
+                // file:///Users/{user}/Library/Developer/CoreSimulator/Devices/{id}/data/Containers/Bundle/Application/{id}/WeexDemo.app/
+                nativeBase = bundleUrl.substring(0, bundleUrl.lastIndexOf('/') + 1);
+            }
+            else {
+                var host = 'localhost:12580';
+                var matches = /\/\/([^\/]+?)\//.exec(this.$getConfig().bundleUrl);
+                if (matches && matches.length >= 2) {
+                host = matches[1];
+                }
+                nativeBase = 'http://' + host + '/' + this.dir + '/build/';
+            }
+            var h5Base = bundleUrl;
+            // in Native
+            var base = nativeBase;
+            if (typeof window == 'object') {
+                // in Browser or WebView
+                base = h5Base;
+            }
+            this.baseURL = base;
+            this.todoselect();
+        },
+
+        methods: {
+            
+            onclickrightitem: function(){
+                //发送事件， 子标签通过注册这个通知获取点击事件
+                this._parent.$emit('rightitemnotify')
+            },
+
+            onclickleftitem: function(){
+                //发送事件， 子标签通过注册这个通知获取点击事件
+                this._parent.$emit('leftitemnotify')
+            },
+
+            oninput:function(){
+                this._parent.$emit('inputbeginnotify')
+            },
+            todoselect:function(){
+
+                this.leftcolor = '#3CB0FC';
+                this.leftbgcolor = 'white';
+                this.rightcolor = 'white';
+                this.rightbgcolor = '#3CB0FC';
+                this.yixuanisplay = false;
+                this.daixuanisplay = true;
+                this.radius = 6;
+                this._parent.$emit('todoselect')
+            },
+            doneselect:function(){
+                this.rightbgcolor = 'white';
+                this.rightcolor = '#3CB0FC';
+                this.leftcolor = 'white';
+                this.leftbgcolor = '#3CB0FC';
+                this.daixuanisplay = false;
+                this. yixuanisplay = true;
+                this.radius = 6;
+                this._parent.$emit('doneselect')
+            }
+
+        }
+
+    }
+
+</script>

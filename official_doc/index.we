@@ -1,0 +1,137 @@
+<style>
+  .content {
+    color: #353535;
+    background-color: #666;
+  }
+  .tabbar {
+    background-color: #fff;
+  }
+</style>
+
+<template>
+  <div >
+    <!-- <wxc-navbar></wxc-navbar> -->
+    <wxc-tabbar class="tabbar" tab-items={{tabItems}} unselected-color={{unselectColor}} selected-color={{selectColor}}></wxc-tabbar>
+  </div>
+</template>
+
+<script>
+  require('weex-components');
+  var storage = require('@weex-module/storage');
+  module.exports = {
+    data: {
+      dir: 'official_doc',
+      selectColor:"#238EF5",
+      unselectColor:"#6b6969",
+      tabItems: [
+        {
+          index: 0,
+          title: "首页",
+          titleColor: 0x0,
+          icon: "",
+          image: "local://tab1.png",
+          selectedImage: "local://tab1_selected.png",
+          src: "tab1/index.js",
+          visibility: "visible",
+        },
+        {
+          index: 1,
+          title: "待办",
+          titleColor: 0x0,
+          icon:"",
+          image: "local://tab2.png",
+          selectedImage: "local://tab2_selected.png",
+          src: "tab2/index.js?itemId=tab2",
+          visibility: "hidden",
+        },
+        {
+          index: 2,
+          title: "新建",
+          titleColor: 0x0,
+          icon:"",
+          image: "local://sharedoc_not_sele.png",
+          selectedImage: "local://sharedoc_sele.png",
+          src: "tab3/index.js",
+          visibility: "hidden",
+        },
+        {
+            index: 3,
+            title: "我的",
+            titleColor: 0x0,
+            icon:"",
+            image: "local://tab4.png",
+            selectedImage: "local://tab4_selected.png",
+            src: "tab4/index.js",
+            visibility: "hidden",
+        }
+      ],
+    },
+    created: function () {
+      var bundleUrl = this.$getConfig().bundleUrl;
+      var nativeBase;
+      var isAndroidAssets = bundleUrl.indexOf('your_current_IP') >= 0 || bundleUrl.indexOf('file://assets/')>=0;
+      var isiOSAssets = bundleUrl.indexOf('file:///') >= 0 && bundleUrl.indexOf('WeexDemo.app') > 0;
+      if (isAndroidAssets) {
+        nativeBase = 'file://assets/';
+      } else if (isiOSAssets) {
+        // file:///var/mobile/Containers/Bundle/Application/{id}/WeexDemo.app/
+        // file:///Users/{user}/Library/Developer/CoreSimulator/Devices/{id}/data/Containers/Bundle/Application/{id}/WeexDemo.app/
+        nativeBase = bundleUrl.substring(0, bundleUrl.lastIndexOf('/') + 1);
+      } else {
+        var host = 'localhost:12580';
+        var matches = /\/\/([^\/]+?)\//.exec(this.$getConfig().bundleUrl);
+        if (matches && matches.length >= 2) {
+          host = matches[1];
+        }
+        nativeBase = 'http://' + host + '/' + this.dir + '/build/';
+      }
+      var h5Base = './' + this.dir + '/build/';
+      // in Native
+      var base = nativeBase;
+      if (typeof window === 'object') {
+        // in Browser or WebView
+        base = h5Base;
+      }
+
+      for(var i = 0; i < this.tabItems.length; i++) {
+          var tabItem = this.tabItems[i];
+          tabItem.src = base + tabItem.src;
+      }
+
+      /*获取用户信息*
+      {
+        "attr":{
+          "parameter_encyptkey":"3bqmmh7IjGJ6pm0n",
+          "parameter_encyptvector":"f02486cN764PGeGl",
+          "parameter_userid":"179206",
+          "parameter_username":"谢焱",
+          "parameter_usertokenid":"1498632065496"
+        },
+        "blockIds":"",
+        "blocks":{},
+        "detailMsg":"",
+        "msg":"不需要做登录后检查...",
+        "msgKey":"",
+        "status":1
+      }
+      */
+      weex.requireModule('user').getUserInfo(function(info){
+        console.log('获取登陆信息并存储' ,info);
+        storage.setItem('user_info', JSON.stringify(info), function(e) {});
+      })
+    },
+    methods: {
+      ready: function (e) {
+        var vm = this;
+        vm.$on('tabBar.onClick',function(e){
+          var detail= e.detail;
+          nativeLog('tabBar.onClick ' + detail.index);
+        });
+      },
+      viewappear:function(){
+        // storage.removeItem('person-list', function (e) {
+        // })
+      }
+    }
+  }
+</script>
