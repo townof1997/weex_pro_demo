@@ -15,7 +15,7 @@ Support Android 4.1 (API 16) and iOS 7.0+.
 
 ## 第2步：下载Weex源码
 
-* `git clone https://github.com/KalicyZhou/weex-example.git`
+* `git clone https://github.com/townof1997/weex_pro_demo.git`
 
 ## 第3步：运行Weex源码
 
